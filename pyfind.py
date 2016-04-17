@@ -62,6 +62,7 @@ def find(searchfor='', dir='', subdirs=False, filetypes=['.py'],
             del dirs[:]
         if drmonly and not os.path.isfile(os.path.join(root, '_find.drm')):
             continue # don't search folders that don't have _find.drm in them
+        folder_echoed = False
         for file in files:
             if os.path.splitext(file)[1].lower() in filetypes:
                 fullname = os.path.join(root, file)
@@ -75,12 +76,13 @@ def find(searchfor='', dir='', subdirs=False, filetypes=['.py'],
                             hit_files.add(fullname)
                             hit_dirs.add(root)
                             if not found:
-                                click.echo(click.style('-'*75, fg='blue'))
-                                click.echo(click.style('Folder: ' + root, fg='cyan'))
-                                click.echo(click.style('-'*75, fg='blue'))
-                                click.echo(click.style('  File: ', fg='cyan'), nl=False)
+                                if not folder_echoed:
+                                    click.echo(click.style('-'*75, fg='blue'))
+                                    click.echo(click.style('Folder: ' + root, fg='cyan'))
+                                click.echo(click.style('------> ', fg='cyan'), nl=False)
                                 click.echo(file)
                                 found = True
+                                folder_echoed = True
 
                             # print the found match
                             lineno_str = str(lineno).rjust(6) + ': '
