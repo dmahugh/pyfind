@@ -16,7 +16,7 @@ def cli():
     1st argument = what to search for
     /// defaults to be implemented later:
     - verbosity levels; TBD; show matches versus summarize files plus number of matches each
-    
+
     Prints to the console all matches found.
     """
 
@@ -57,35 +57,45 @@ def find(searchfor='', dir='', subdirs=False, filetypes=['.py'],
     hit_files = set() # set of files that have search hits
     hit_dirs = set() # set of directories that have search hits
 
-    for root,dirs,files in os.walk(dir):
+    for root, dirs, files in os.walk(dir):
         if not subdirs:
             del dirs[:]
         if drmonly and not os.path.isfile(os.path.join(root, '_find.drm')):
             continue # don't search folders that don't have _find.drm in them
         for file in files:
             if os.path.splitext(file)[1].lower() in filetypes:
-                fullname = os.path.join(root,file)
+                fullname = os.path.join(root, file)
                 with open(fullname, 'r') as searchfile:
                     found = False
                     for lineno, line in enumerate(searchfile, 1):
                         if searchfor.lower() in line.lower():
+
+                            # at least one match found for this file
                             matches += 1
                             hit_files.add(fullname)
                             hit_dirs.add(root)
                             if not found:
-                                print('\n-- ' + file + ' -- ' + root)
+                                click.echo(click.style('-'*75, fg='blue'))
+                                click.echo(click.style('Folder: ' + root, fg='cyan'))
+                                click.echo(click.style('-'*75, fg='blue'))
+                                click.echo(click.style('  File: ', fg='cyan'), nl=False)
+                                click.echo(file)
                                 found = True
+
                             # print the found match
-                            toprint = str(lineno) + ': ' + line.strip()
-                            if len(toprint) > 77:
-                                toprint = toprint[:74] + '...'
+                            lineno_str = str(lineno).rjust(6) + ': '
+                            toprint = line.strip()
+                            if len(toprint) > 67:
+                                toprint = toprint[:64] + '...'
                             try:
-                                print(toprint[:77])
+                                click.echo(click.style(lineno_str, fg='cyan'), nl=False)
+                                click.echo(toprint[:67])
                             except UnicodeEncodeError:
-                                toprint = str(lineno) + ': ' + str(line.encode('utf8'))
-                                if len(toprint) > 77:
-                                    toprint = toprint[:74] + '...'
-                                print(toprint)
+                                toprint = str(line.encode('utf8'))
+                                if len(toprint) > 67:
+                                    toprint = toprint[:64] + '...'
+                                click.echo(click.style(lineno_str, fg='cyan'), nl=False)
+                                click.echo(toprint)
 
     print('\nTOTAL FOUND: {0} matches in {1} files in {2} folders'.format(
         matches, len(hit_files), len(hit_dirs)))
