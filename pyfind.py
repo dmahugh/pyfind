@@ -36,7 +36,7 @@ def cli():
     """
 
 #------------------------------------------------------------------------------
-def find(searchfor='', dir='', subdirs=False, filetypes=['.py'],
+def find(searchfor='', dir='', subdirs=False, filetypes=None,
          drmonly=True):
     """Search text files such as source code.
 
@@ -77,9 +77,9 @@ def find(searchfor='', dir='', subdirs=False, filetypes=['.py'],
                             hit_dirs.add(root)
                             if not found:
                                 if not folder_echoed:
-                                    click.echo(click.style('-'*75, fg='blue'))
-                                    click.echo(click.style('Folder: ' + root, fg='cyan'))
-                                click.echo(click.style('------> ', fg='cyan'), nl=False)
+                                    click.echo(click.style('-'*abs(74-len(root)),
+                                                           fg='blue'), nl=False)
+                                    click.echo(click.style(' ' + root, fg='cyan'))
                                 click.echo(file)
                                 found = True
                                 folder_echoed = True
@@ -90,18 +90,17 @@ def find(searchfor='', dir='', subdirs=False, filetypes=['.py'],
                             if len(toprint) > 67:
                                 toprint = toprint[:64] + '...'
                             try:
-                                click.echo(click.style(lineno_str, fg='cyan'), nl=False)
-                                click.echo(toprint[:67])
+                                click.echo(click.style(lineno_str + toprint, fg='cyan'))
                             except UnicodeEncodeError:
                                 toprint = str(line.encode('utf8'))
                                 if len(toprint) > 67:
                                     toprint = toprint[:64] + '...'
-                                click.echo(click.style(lineno_str, fg='cyan'), nl=False)
-                                click.echo(toprint)
+                                click.echo(click.style(lineno_str + toprint, fg='cyan'))
 
-    print('\nTOTAL FOUND: {0} matches in {1} files in {2} folders'.format(
-        matches, len(hit_files), len(hit_dirs)))
+    summary = '{0} matches / {1} files / {2} folders'.format(
+        matches, len(hit_files), len(hit_dirs))
+    click.echo(click.style(summary.rjust(75), fg='cyan'), nl=False)
 
 #-------------------------------------------------------------------------------
 if __name__ == '__main__':
-    find(searchfor='import', subdirs=False, filetypes=['.py'], drmonly=False)
+    find(searchfor='import os', dir='..', subdirs=True, filetypes=['.py'], drmonly=True)
