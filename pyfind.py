@@ -38,43 +38,42 @@ def cli():
     """
 
 #------------------------------------------------------------------------------
-def get_matches(searchfor='', startdir='', subdirs=False, filetypes=None,
-                drmonly=True, display=True):
+def get_matches(*, searchfor='', startdir=os.getcwd(), subdirs=False,
+                filetypes=None, drmonly=True, display=True):
     """Search text files, return list of matches.
 
-    dir = path to folder to be searched
-    str = string to search for (not case-sensitive)
+    searchfor = string to search for (not case-sensitive)
+    startdir = path to folder to be searched
     subdirs = whether to search subdirectories of dir
     filetypes = list of file types (extensions) to search; lowercase
     drmonly = whether to only search folders with a _find.drm file in them
     display = whether to display matches as they're found
 
-    Returns a list of tuples containing four values: folder, filename,
-    line number of the match, full text of the matching line.
+    Returns a list of dictionaries with these keys: folder, filename,
+    lineno, linetext.
     """
     if not searchfor or not filetypes:
         return []
-    if not startdir:
-        startdir = os.getcwd()
 
-    displayer = MatchPrinter()
+    output = MatchPrinter()
 
     matchlist = []
     for root, dirs, files in os.walk(startdir):
         if not subdirs:
-            del dirs[:]
+            del dirs[:] # don't search subfolders
         if drmonly and not os.path.isfile(os.path.join(root, '_find.drm')):
-            continue # don't search folders that don't have _find.drm in them
+            continue # don't search folders that don't have _find.drm
         for file in files:
             if os.path.splitext(file)[1].lower() in filetypes:
                 fullname = os.path.join(root, file)
                 with open(fullname, 'r') as searchfile:
                     for lineno, line in enumerate(searchfile, 1):
                         if searchfor.lower() in line.lower():
-                            match = (root, file, lineno, line)
+                            match = {'folder': root, 'filename': file,
+                                     'lineno': lineno, 'linetext': line}
                             matchlist.append(match)
                             if display:
-                                displayer.display(match)
+                                output.display(match)
 
     if display:
         print_summary(matchlist)
@@ -85,14 +84,14 @@ def get_matches(searchfor='', startdir='', subdirs=False, filetypes=None,
 def print_summary(hitlist):
     """Print summary of search results: # of folders, files, matches.
 
-    parameter = the list of matches returned by get_matches().
+    parameter = the list of dictionaries returned by get_matches().
     """
     folders = []
     filenames = []
 
     for match in hitlist:
-        folder = match[0]
-        filename = match[1]
+        folder = match['folder']
+        filename = match['filename']
         if not folder in folders:
             folders.append(folder)
         if not filename in filenames:
@@ -114,12 +113,12 @@ class MatchPrinter(object):
     def display(self, match_tuple):
         """Display a search hit.
 
-        parameter = tuple of folder, filename, line number, line text
+        parameter = dictionary of folder, filename, lineno, linetext
         """
-        folder = match_tuple[0]
-        filename = match_tuple[1]
-        lineno = match_tuple[2]
-        linetext = match_tuple[3]
+        folder = match_tuple['folder']
+        filename = match_tuple['filename']
+        lineno = match_tuple['lineno']
+        linetext = match_tuple['linetext']
 
         if folder != self.folder:
             click.echo(click.style('-'*abs(74-len(folder)), fg='blue'), nl=False)
