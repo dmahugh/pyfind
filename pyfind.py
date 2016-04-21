@@ -39,14 +39,14 @@ def cli():
 
 #------------------------------------------------------------------------------
 def get_matches(*, searchfor='', startdir=os.getcwd(), subdirs=False,
-                filetypes=None, drmonly=True, display=True):
+                filetypes=None, pyfind=True, display=True):
     """Search text files, return list of matches.
 
     searchfor = string to search for (not case-sensitive)
     startdir = path to folder to be searched
     subdirs = whether to search subdirectories of dir
     filetypes = list of file types (extensions) to search; lowercase
-    drmonly = whether to only search folders with a _find.drm file in them
+    pyfind = whether to only search folders with a _pyfind file in them
     display = whether to display matches as they're found
 
     Returns a list of dictionaries with these keys: folder, filename,
@@ -61,8 +61,8 @@ def get_matches(*, searchfor='', startdir=os.getcwd(), subdirs=False,
     for root, dirs, files in os.walk(startdir):
         if not subdirs:
             del dirs[:] # don't search subfolders
-        if drmonly and not os.path.isfile(os.path.join(root, '_find.drm')):
-            continue # don't search folders that don't have _find.drm
+        if pyfind and not os.path.isfile(os.path.join(root, '_pyfind')):
+            continue # don't search folders that don't have _pyfind
         for file in files:
             if os.path.splitext(file)[1].lower() in filetypes:
                 fullname = os.path.join(root, file)
@@ -145,4 +145,4 @@ class MatchPrinter(object):
 #-------------------------------------------------------------------------------
 if __name__ == '__main__':
     HITLIST = get_matches(searchfor='import os', startdir='..', subdirs=True,
-                          filetypes=['.py'], drmonly=True)
+                          filetypes=['.py'], pyfind=True)
