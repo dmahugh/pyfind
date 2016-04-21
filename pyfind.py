@@ -1,8 +1,9 @@
 """Command-line tool for Python source-code search.
 
-cli() --------> Handle command-line arguments.
-get_matches --> Search text files, return list of matches.
-MatchPrinter -> Class for printing matches.
+cli() ------------> Handle command-line arguments.
+get_matches() ----> Search text files, return list of matches.
+MatchPrinter -----> Class for printing matches.
+print_summary() --> Print # of folders, files, matches.
 """
 import os
 import sys
@@ -37,73 +38,7 @@ def cli():
     """
 
 #------------------------------------------------------------------------------
-def find(searchfor='', dir='', subdirs=False, filetypes=None,
-         drmonly=True):
-    """Search text files such as source code.
-
-    dir = path to folder to be searched
-    str = string to search for (not case-sensitive)
-    subdirs = whether to search subdirectories of dir
-    filetypes = list of file types (extensions) to search; lowercase
-    drmonly = whether to only search folders with a _find.drm file in them
-
-    Prints to the console all matches found: folder, filename, line #, line
-    """
-    if not searchfor or not filetypes:
-        return
-    if not dir:
-        dir = os.getcwd()
-
-    matches = 0 # number of matches (lines) found
-    hit_files = set() # set of files that have search hits
-    hit_dirs = set() # set of directories that have search hits
-
-    for root, dirs, files in os.walk(dir):
-        if not subdirs:
-            del dirs[:]
-        if drmonly and not os.path.isfile(os.path.join(root, '_find.drm')):
-            continue # don't search folders that don't have _find.drm in them
-        folder_echoed = False
-        for file in files:
-            if os.path.splitext(file)[1].lower() in filetypes:
-                fullname = os.path.join(root, file)
-                with open(fullname, 'r') as searchfile:
-                    found = False
-                    for lineno, line in enumerate(searchfile, 1):
-                        if searchfor.lower() in line.lower():
-
-                            # at least one match found for this file
-                            matches += 1
-                            hit_files.add(fullname)
-                            hit_dirs.add(root)
-                            if not found:
-                                if not folder_echoed:
-                                    click.echo(click.style('-'*abs(74-len(root)),
-                                                           fg='blue'), nl=False)
-                                    click.echo(click.style(' ' + root, fg='cyan'))
-                                click.echo(file)
-                                found = True
-                                folder_echoed = True
-
-                            # print the found match
-                            lineno_str = str(lineno).rjust(6) + ': '
-                            toprint = line.strip()
-                            if len(toprint) > 67:
-                                toprint = toprint[:64] + '...'
-                            try:
-                                click.echo(click.style(lineno_str + toprint, fg='cyan'))
-                            except UnicodeEncodeError:
-                                toprint = str(line.encode('utf8'))
-                                if len(toprint) > 67:
-                                    toprint = toprint[:64] + '...'
-                                click.echo(click.style(lineno_str + toprint, fg='cyan'))
-
-    summary = '{0} matches / {1} files / {2} folders'.format(
-        matches, len(hit_files), len(hit_dirs))
-    click.echo(click.style(summary.rjust(75), fg='cyan'), nl=False)
-
-#------------------------------------------------------------------------------
-def get_matches(searchfor='', dir='', subdirs=False, filetypes=None,
+def get_matches(searchfor='', startdir='', subdirs=False, filetypes=None,
                 drmonly=True, display=True):
     """Search text files, return list of matches.
 
@@ -119,13 +54,13 @@ def get_matches(searchfor='', dir='', subdirs=False, filetypes=None,
     """
     if not searchfor or not filetypes:
         return []
-    if not dir:
-        dir = os.getcwd()
+    if not startdir:
+        startdir = os.getcwd()
 
     displayer = MatchPrinter()
 
     matchlist = []
-    for root, dirs, files in os.walk(dir):
+    for root, dirs, files in os.walk(startdir):
         if not subdirs:
             del dirs[:]
         if drmonly and not os.path.isfile(os.path.join(root, '_find.drm')):
@@ -141,7 +76,32 @@ def get_matches(searchfor='', dir='', subdirs=False, filetypes=None,
                             if display:
                                 displayer.display(match)
 
+    if display:
+        print_summary(matchlist)
+
     return matchlist
+
+#-------------------------------------------------------------------------------
+def print_summary(hitlist):
+    """Print summary of search results: # of folders, files, matches.
+
+    parameter = the list of matches returned by get_matches().
+    """
+    folders = []
+    filenames = []
+
+    for match in hitlist:
+        folder = match[0]
+        filename = match[1]
+        if not folder in folders:
+            folders.append(folder)
+        if not filename in filenames:
+            filenames.append(filename)
+
+    summary = '{0} matches / {1} files / {2} folders'.format(
+        len(hitlist), len(filenames), len(folders))
+
+    click.echo(click.style(summary.rjust(75), fg='cyan'), nl=False)
 
 #-------------------------------------------------------------------------------
 class MatchPrinter(object):
@@ -185,6 +145,5 @@ class MatchPrinter(object):
 
 #-------------------------------------------------------------------------------
 if __name__ == '__main__':
-    #find(searchfor='import os', dir='..', subdirs=True, filetypes=['.py'], drmonly=True)
-    HITLIST = get_matches(searchfor='import os', dir='..', subdirs=True,
+    HITLIST = get_matches(searchfor='import os', startdir='..', subdirs=True,
                           filetypes=['.py'], drmonly=True)
