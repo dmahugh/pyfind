@@ -2,7 +2,7 @@
 
 cli() --------> Handle command-line arguments.
 get_matches --> Search text files, return list of matches.
-print_match --> Display a search hit.
+MatchPrinter -> Class for printing matches.
 """
 import os
 import sys
@@ -122,6 +122,8 @@ def get_matches(searchfor='', dir='', subdirs=False, filetypes=None,
     if not dir:
         dir = os.getcwd()
 
+    displayer = MatchPrinter()
+
     matchlist = []
     for root, dirs, files in os.walk(dir):
         if not subdirs:
@@ -137,41 +139,49 @@ def get_matches(searchfor='', dir='', subdirs=False, filetypes=None,
                             match = (root, file, lineno, line)
                             matchlist.append(match)
                             if display:
-                                print_match(match)
+                                displayer.display(match)
 
     return matchlist
 
 #-------------------------------------------------------------------------------
-#/// TO DO: change this to a MatchPrinter class, track last printed folder and filename as properties
-def print_match(match_tuple):
-    """Display a search hit.
-
-    parameter = tuple of folder, filename, line number, line text
+class MatchPrinter(object):
+    """Print matches as they're found.
     """
-    folder = match_tuple[0]
-    filename = match_tuple[1]
-    lineno = match_tuple[2]
-    linetext = match_tuple[3]
+    def __init__(self):
+        self.folder = ''
+        self.filename = ''
 
-    #/// TO DO: don't print folder if it hasn't changed
-    click.echo(click.style('-'*abs(74-len(folder)), fg='blue'), nl=False)
-    click.echo(click.style(' ' + folder, fg='cyan'))
+    def display(self, match_tuple):
+        """Display a search hit.
 
-    #/// TO DO: don't print filename if it hasn't changed
-    click.echo(filename)
+        parameter = tuple of folder, filename, line number, line text
+        """
+        folder = match_tuple[0]
+        filename = match_tuple[1]
+        lineno = match_tuple[2]
+        linetext = match_tuple[3]
 
-    # print the matching line
-    lineno_str = str(lineno).rjust(6) + ': '
-    toprint = linetext.strip()
-    if len(toprint) > 67:
-        toprint = toprint[:64] + '...'
-    try:
-        click.echo(click.style(lineno_str + toprint, fg='cyan'))
-    except UnicodeEncodeError:
-        toprint = str(linetext.encode('utf8'))
+        if folder != self.folder:
+            click.echo(click.style('-'*abs(74-len(folder)), fg='blue'), nl=False)
+            click.echo(click.style(' ' + folder, fg='cyan'))
+            self.folder = folder
+
+        if filename != self.filename:
+            click.echo(filename)
+            self.filename = filename
+
+        # print the matching line
+        lineno_str = str(lineno).rjust(6) + ': '
+        toprint = linetext.strip()
         if len(toprint) > 67:
             toprint = toprint[:64] + '...'
-        click.echo(click.style(lineno_str + toprint, fg='cyan'))
+        try:
+            click.echo(click.style(lineno_str + toprint, fg='cyan'))
+        except UnicodeEncodeError:
+            toprint = str(linetext.encode('utf8'))
+            if len(toprint) > 67:
+                toprint = toprint[:64] + '...'
+            click.echo(click.style(lineno_str + toprint, fg='cyan'))
 
 #-------------------------------------------------------------------------------
 if __name__ == '__main__':
