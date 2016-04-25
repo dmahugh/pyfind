@@ -11,31 +11,24 @@ import sys
 import click
 
 #------------------------------------------------------------------------------
-def cli():
+CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
+@click.argument('searchfor')
+@click.command(context_settings=CONTEXT_SETTINGS)
+@click.version_option(version='1.0', prog_name='PyFind')
+def cli(searchfor, startdir):
     """Command-line wrapper for find() function.
 
-    Handles these command-line arguments:
-    1st argument = what to search for
-    /// defaults to be implemented later:
-    - verbosity levels; TBD; show matches versus summarize files plus number of matches each
+    /// design command-line syntax; something like this:
+    /// c:> pyfind "searchfor" startdir --subdirs --pyfind --nodisplay --filetypes=py/txt
 
+    /// LATER: implement verbosity levels; show matches versus summarize files plus number of matches each
+ 
     Prints to the console all matches found.
     """
+    if not startdir:
+        startdir = os.getcwd()
 
-    pass
-
-    #/// hexprint code to be modified:
-    """
-    # note that sys.argv[0] is the name of the script, so we start at argv[1]
-    if len(sys.argv) < 2:
-        click.echo('Syntax --> hexprint filename offset nbytes (offset/nbytes are optional)')
-        return
-
-    filename = sys.argv[1]
-    offset = 0 if len(sys.argv) < 3 else int(sys.argv[2])
-    totbytes = 0 if len(sys.argv) < 4 else int(sys.argv[3])
-    hexdump(filename=filename, offset=offset, totbytes=totbytes)
-    """
+    get_matches(searchfor=searchfor, startdir=startdir)
 
 #------------------------------------------------------------------------------
 def get_matches(*, searchfor='', startdir=os.getcwd(), subdirs=False,
