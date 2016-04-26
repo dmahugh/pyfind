@@ -13,6 +13,7 @@ import click
 #------------------------------------------------------------------------------
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.argument('searchfor')
+@click.argument('startdir')
 @click.command(context_settings=CONTEXT_SETTINGS)
 @click.version_option(version='1.0', prog_name='PyFind')
 def cli(searchfor, startdir):
@@ -45,11 +46,14 @@ def get_matches(*, searchfor='', startdir=os.getcwd(), subdirs=False,
     Returns a list of dictionaries with these keys: folder, filename,
     lineno, linetext.
     """
-    if not searchfor or not filetypes:
+    if not searchfor:
         return []
+    if not filetypes:
+        filetypes = ['.py'] # default is .py if no filetypes provided
 
     output = MatchPrinter()
 
+    click.echo('>>>>>' + searchfor)
     matchlist = []
     for root, dirs, files in os.walk(startdir):
         if not subdirs:
@@ -138,4 +142,4 @@ class MatchPrinter(object):
 #-------------------------------------------------------------------------------
 if __name__ == '__main__':
     HITLIST = get_matches(searchfor='import os', startdir='..', subdirs=True,
-                          filetypes=['.py'], pyfind=True)
+                          pyfind=True)
