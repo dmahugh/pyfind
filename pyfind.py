@@ -31,6 +31,7 @@ def cli(searchfor, startdir, subdirs, nohits, nofiles, allfolders):
          |___|___|___|
            |___|___|         Prints search results to console.
              |___|
+               |
     """
     get_matches(searchfor=searchfor, startdir=startdir, subdirs=subdirs,
                 allfolders=allfolders, nohits=nohits, nofiles=nofiles)
