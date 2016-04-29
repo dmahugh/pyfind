@@ -15,30 +15,37 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.argument('searchfor')
 @click.command(context_settings=CONTEXT_SETTINGS)
 @click.version_option(version='1.0', prog_name='PyFind')
-@click.option('-s', '--subdirs', is_flag=True, help='Search subdirectories.')
-@click.option('-nh', '--nohits', is_flag=True, help="Don't display search hits.")
-@click.option('-nf', '--nofiles', is_flag=True, help="Don't display files/folders.")
-def cli(searchfor, startdir, subdirs, nohits, nofiles):
+@click.option('-s', '--subdirs', is_flag=True,
+              help='Search subdirectories.')
+@click.option('-nh', '--nohits', is_flag=True,
+              help="Don't display search hits.")
+@click.option('-nf', '--nofiles', is_flag=True,
+              help="Don't display files/folders.")
+@click.option('-af', '--allfolders', is_flag=True,
+              help="Search ALL folders (not just _pyfind folders).")
+def cli(searchfor, startdir, subdirs, nohits, nofiles, allfolders):
     """\b
     SEARCHFOR = text to search for
     STARTDIR = folder to be searched
 
     Prints to the console all matches found.
     """
-    get_matches(searchfor=searchfor, startdir=startdir, subdirs=subdirs, nohits=nohits, nofiles=nofiles)
+    get_matches(searchfor=searchfor, startdir=startdir, subdirs=subdirs,
+                allfolders=allfolders, nohits=nohits, nofiles=nofiles)
 
 #------------------------------------------------------------------------------
 def get_matches(*, searchfor='', startdir=os.getcwd(), subdirs=False,
-                filetypes=None, pyfind=True, nohits=False, nofiles=False):
+                filetypes=None, allfolders=False, nohits=False, nofiles=False):
     """Search text files, return list of matches.
 
-    searchfor = string to search for (not case-sensitive)
-    startdir = path to folder to be searched
-    subdirs = whether to search subdirectories of dir
-    filetypes = list of file types (extensions) to search; lowercase
-    pyfind = whether to only search folders with a _pyfind file in them
-    nohits = whether to suppress output of search hits (matching lines)
-    nofiles = whether to suppress output of filenames/folders
+    searchfor --> string to search for (not case-sensitive)
+    startdir ---> path to folder to be searched
+    subdirs ----> whether to search subdirectories of dir
+    filetypes --> list of file types (extensions) to search; lowercase
+    allfolders -> whether to search all folders; if false, only folders with a
+                  _pyfind file in them are searched
+    nohits -----> whether to suppress output of search hits (matching lines)
+    nofiles ----> whether to suppress output of filenames/folders
 
     Returns a list of dictionaries with these keys: folder, filename,
     lineno, linetext.
@@ -54,7 +61,7 @@ def get_matches(*, searchfor='', startdir=os.getcwd(), subdirs=False,
     for root, dirs, files in os.walk(startdir):
         if not subdirs:
             del dirs[:] # don't search subfolders
-        if pyfind and not os.path.isfile(os.path.join(root, '_pyfind')):
+        if not allfolders and not os.path.isfile(os.path.join(root, '_pyfind')):
             continue # don't search folders that don't have _pyfind
         for file in files:
             if os.path.splitext(file)[1].lower() in filetypes:
