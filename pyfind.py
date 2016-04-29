@@ -6,7 +6,6 @@ MatchPrinter -----> Class for printing matches.
 print_summary() --> Print # of folders, files, matches.
 """
 import os
-import sys
 
 import click
 
@@ -14,21 +13,23 @@ import click
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.argument('startdir', default='.')
 @click.argument('searchfor')
-@click.option('-s', '--subdirs', is_flag=True, help='Search subdirectories.')
 @click.command(context_settings=CONTEXT_SETTINGS)
 @click.version_option(version='1.0', prog_name='PyFind')
-def cli(searchfor, startdir, subdirs):
+@click.option('-s', '--subdirs', is_flag=True, help='Search subdirectories.')
+@click.option('-nh', '--nohits', is_flag=True, help="Don't display search hits.")
+@click.option('-nf', '--nofiles', is_flag=True, help="Don't display files/folders.")
+def cli(searchfor, startdir, subdirs, nohits, nofiles):
     """\b
     SEARCHFOR = text to search for
     STARTDIR = folder to be searched
 
     Prints to the console all matches found.
     """
-    get_matches(searchfor=searchfor, startdir=startdir, subdirs=subdirs)
+    get_matches(searchfor=searchfor, startdir=startdir, subdirs=subdirs, nohits=nohits, nofiles=nofiles)
 
 #------------------------------------------------------------------------------
 def get_matches(*, searchfor='', startdir=os.getcwd(), subdirs=False,
-                filetypes=None, pyfind=True, display=True):
+                filetypes=None, pyfind=True, nohits=False, nofiles=False):
     """Search text files, return list of matches.
 
     searchfor = string to search for (not case-sensitive)
@@ -36,7 +37,8 @@ def get_matches(*, searchfor='', startdir=os.getcwd(), subdirs=False,
     subdirs = whether to search subdirectories of dir
     filetypes = list of file types (extensions) to search; lowercase
     pyfind = whether to only search folders with a _pyfind file in them
-    display = whether to display matches as they're found
+    nohits = whether to suppress output of search hits (matching lines)
+    nofiles = whether to suppress output of filenames/folders
 
     Returns a list of dictionaries with these keys: folder, filename,
     lineno, linetext.
@@ -63,8 +65,7 @@ def get_matches(*, searchfor='', startdir=os.getcwd(), subdirs=False,
                             match = {'folder': root, 'filename': file,
                                      'lineno': lineno, 'linetext': line}
                             matchlist.append(match)
-                            if display:
-                                output.display(match)
+                            output.display(match, nohits, nofiles)
 
     print_summary(matchlist)
 
@@ -100,37 +101,40 @@ class MatchPrinter(object):
         self.folder = ''
         self.filename = ''
 
-    def display(self, match_tuple):
+    def display(self, match_tuple, nohits, nofiles):
         """Display a search hit.
 
-        parameter = dictionary of folder, filename, lineno, linetext
+        1st parameter = dictionary of folder, filename, lineno, linetext
+        2nd parameter = whether to suppress output of search hits
+        3rd parameter = whether to suppress output of filename/foldername
         """
         folder = match_tuple['folder']
         filename = match_tuple['filename']
         lineno = match_tuple['lineno']
         linetext = match_tuple['linetext']
 
-        if folder != self.folder:
+        if folder != self.folder and not nofiles:
             click.echo(click.style('-'*abs(74-len(folder)), fg='blue'), nl=False)
             click.echo(click.style(' ' + folder, fg='cyan'))
             self.folder = folder
 
-        if filename != self.filename:
+        if filename != self.filename and not nofiles:
             click.echo(filename)
             self.filename = filename
 
-        # print the matching line
-        lineno_str = str(lineno).rjust(6) + ': '
-        toprint = linetext.strip()
-        if len(toprint) > 67:
-            toprint = toprint[:64] + '...'
-        try:
-            click.echo(click.style(lineno_str + toprint, fg='cyan'))
-        except UnicodeEncodeError:
-            toprint = str(linetext.encode('utf8'))
+        if not nohits:
+            # print the matching line
+            lineno_str = str(lineno).rjust(6) + ': '
+            toprint = linetext.strip()
             if len(toprint) > 67:
                 toprint = toprint[:64] + '...'
-            click.echo(click.style(lineno_str + toprint, fg='cyan'))
+            try:
+                click.echo(click.style(lineno_str + toprint, fg='cyan'))
+            except UnicodeEncodeError:
+                toprint = str(linetext.encode('utf8'))
+                if len(toprint) > 67:
+                    toprint = toprint[:64] + '...'
+                click.echo(click.style(lineno_str + toprint, fg='cyan'))
 
 #-------------------------------------------------------------------------------
 if __name__ == '__main__':
