@@ -12,24 +12,26 @@ import click
 
 #------------------------------------------------------------------------------
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
+@click.argument('startdir', default='.')
 @click.argument('searchfor')
-@click.argument('startdir')
+@click.option('--subdirs', is_flag=True, help='Search subdirectories.')
 @click.command(context_settings=CONTEXT_SETTINGS)
 @click.version_option(version='1.0', prog_name='PyFind')
-def cli(searchfor, startdir):
-    """Command-line wrapper for find() function.
+def cli(searchfor, startdir, subdirs):
+    """\b
+    SEARCHFOR = text to search for
+    STARTDIR = folder to be searched
 
-    /// design command-line syntax; something like this:
-    /// c:> pyfind "searchfor" startdir --subdirs --pyfind --nodisplay --filetypes=py/txt
-
-    /// LATER: implement verbosity levels; show matches versus summarize files plus number of matches each
- 
     Prints to the console all matches found.
     """
-    if not startdir:
-        startdir = os.getcwd()
+    click.echo('>>> startdir - ' + str(startdir))
+    click.echo('>>> searchfor - ' + str(searchfor))
+    click.echo('>>> subdirs - ' + str(subdirs))
 
-    get_matches(searchfor=searchfor, startdir=startdir)
+    #if not startdir:
+    #    startdir = os.getcwd()
+
+    get_matches(searchfor=searchfor, startdir=startdir, subdirs=subdirs)
 
 #------------------------------------------------------------------------------
 def get_matches(*, searchfor='', startdir=os.getcwd(), subdirs=False,
@@ -53,7 +55,6 @@ def get_matches(*, searchfor='', startdir=os.getcwd(), subdirs=False,
 
     output = MatchPrinter()
 
-    click.echo('>>>>>' + searchfor)
     matchlist = []
     for root, dirs, files in os.walk(startdir):
         if not subdirs:
@@ -141,5 +142,5 @@ class MatchPrinter(object):
 
 #-------------------------------------------------------------------------------
 if __name__ == '__main__':
-    HITLIST = get_matches(searchfor='import os', startdir='..', subdirs=True,
+    HITLIST = get_matches(searchfor='import os', startdir='.', subdirs=True,
                           pyfind=True)
