@@ -14,7 +14,7 @@ import click
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.argument('startdir', default='.')
 @click.argument('searchfor')
-@click.option('--subdirs', is_flag=True, help='Search subdirectories.')
+@click.option('-s', '--subdirs', is_flag=True, help='Search subdirectories.')
 @click.command(context_settings=CONTEXT_SETTINGS)
 @click.version_option(version='1.0', prog_name='PyFind')
 def cli(searchfor, startdir, subdirs):
@@ -73,8 +73,7 @@ def get_matches(*, searchfor='', startdir=os.getcwd(), subdirs=False,
                             if display:
                                 output.display(match)
 
-    if display:
-        print_summary(matchlist)
+    print_summary(matchlist)
 
     return matchlist
 
