@@ -24,13 +24,6 @@ def cli(searchfor, startdir, subdirs):
 
     Prints to the console all matches found.
     """
-    click.echo('>>> startdir - ' + str(startdir))
-    click.echo('>>> searchfor - ' + str(searchfor))
-    click.echo('>>> subdirs - ' + str(subdirs))
-
-    #if not startdir:
-    #    startdir = os.getcwd()
-
     get_matches(searchfor=searchfor, startdir=startdir, subdirs=subdirs)
 
 #------------------------------------------------------------------------------
