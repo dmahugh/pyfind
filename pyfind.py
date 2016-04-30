@@ -136,6 +136,11 @@ class MatchPrinter(object):
             click.echo(click.style('-'*abs(74-len(folder)), fg='blue'), nl=False)
             click.echo(click.style(' ' + folder, fg='cyan'))
             self.folder = folder
+            # handle special case of the same-named file being a search hit
+            # in two different folders, by resetting self.filename to an impossible
+            # value to force display of the filename below even if it hasn't
+            # changed since the previous hit ...
+            self.filename = ' / '
 
         if filename != self.filename and not nofiles:
             click.echo(filename)
