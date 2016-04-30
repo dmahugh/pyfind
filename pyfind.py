@@ -17,13 +17,15 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.version_option(version='1.0', prog_name='PyFind')
 @click.option('-s', '--subdirs', is_flag=True,
               help='Search subdirectories.')
+@click.option('-af', '--allfolders', is_flag=True,
+              help="Search ALL folders (not just _pyfind folders).")
+@click.option('-ft', '--filetypes',
+              help="File types to search.")
 @click.option('-nh', '--nohits', is_flag=True,
               help="Don't display search hits.")
 @click.option('-nf', '--nofiles', is_flag=True,
               help="Don't display files/folders.")
-@click.option('-af', '--allfolders', is_flag=True,
-              help="Search ALL folders (not just _pyfind folders).")
-def cli(searchfor, startdir, subdirs, nohits, nofiles, allfolders):
+def cli(searchfor, startdir, subdirs, filetypes, nohits, nofiles, allfolders):
     """\b
     _______________
      |___|___|___|     SEARCHFOR = text to search for
@@ -31,8 +33,15 @@ def cli(searchfor, startdir, subdirs, nohits, nofiles, allfolders):
          |___|
            |           Prints search results to console.
     """
+
+    # convert filetypes to a list
+    if not filetypes:
+        typelist = []
+    else:
+        typelist = ['.' + _ for _ in filetypes.split('/')]
+
     get_matches(searchfor=searchfor, startdir=startdir, subdirs=subdirs,
-                allfolders=allfolders, nohits=nohits, nofiles=nofiles)
+                filetypes=typelist, allfolders=allfolders, nohits=nohits, nofiles=nofiles)
 
 #------------------------------------------------------------------------------
 def get_matches(*, searchfor='', startdir=os.getcwd(), subdirs=False,
