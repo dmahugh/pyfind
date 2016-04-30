@@ -11,34 +11,36 @@ import click
 
 #------------------------------------------------------------------------------
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
-@click.argument('startdir', default='.')
-@click.argument('searchfor')
-@click.command(context_settings=CONTEXT_SETTINGS)
+@click.argument('startdir', default='.', metavar='<startdir>')
+@click.argument('searchfor', metavar='searchfor')
+@click.command(context_settings=CONTEXT_SETTINGS, options_metavar='<options>')
 @click.version_option(version='1.0', prog_name='PyFind')
 @click.option('-s', '--subdirs', is_flag=True,
               help='Search subdirectories.')
 @click.option('-af', '--allfolders', is_flag=True,
-              help="Search ALL folders (not just _pyfind folders).")
-@click.option('-ft', '--filetypes',
-              help="File types to search.")
+              help='Search ALL folders. If omitted, ' +
+              'only searches folders that have a _pyfind file.')
+@click.option('-ft', '--filetypes', metavar='<str>',
+              help='File types to search. Multiple types may ' +
+              'be delimited with /. Default: -ft=py')
 @click.option('-nh', '--nohits', is_flag=True,
-              help="Don't display search hits.")
+              help="Don't display individual search hits.")
 @click.option('-nf', '--nofiles', is_flag=True,
-              help="Don't display files/folders.")
+              help="Don't display filenames/folders.")
 def cli(searchfor, startdir, subdirs, filetypes, nohits, nofiles, allfolders):
     """\b
     _______________
-     |___|___|___|     SEARCHFOR = text to search for
-       |___|___|       STARTDIR  = folder to be searched
+     |___|___|___|    searchfor = text to search for (required)
+       |___|___|      startdir  = folder to be searched (default=current)
          |___|
-           |           Prints search results to console.
+           |          Prints search results to console.
     """
 
     # convert filetypes to a list
     if not filetypes:
         typelist = []
     else:
-        typelist = ['.' + _ for _ in filetypes.split('/')]
+        typelist = ['.' + _.lower() for _ in filetypes.split('/')]
 
     get_matches(searchfor=searchfor, startdir=startdir, subdirs=subdirs,
                 filetypes=typelist, allfolders=allfolders, nohits=nohits, nofiles=nofiles)
@@ -155,5 +157,4 @@ class MatchPrinter(object):
 
 #-------------------------------------------------------------------------------
 if __name__ == '__main__':
-    HITLIST = get_matches(searchfor='import os', startdir='.', subdirs=True,
-                          pyfind=True)
+    HITLIST = get_matches(searchfor='import os', startdir='.', subdirs=True)
