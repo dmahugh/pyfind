@@ -27,6 +27,8 @@ To search subfolders, add the *-s* or *--subdirs* option. Hits are grouped by fo
 
 ![subdirs](https://raw.githubusercontent.com/dmahugh/pyfind/master/images/subdirs.png)
 
-/// filetypes
+By default, pyfind only searches .py files. Use the *-ft* or *--filetypes* option to specify other file types to be searched. You can specify multiple file types by separating the extensions with /:
+
+![filetypes](https://raw.githubusercontent.com/dmahugh/pyfind/master/images/filetypes.png)
 
 /// allfolders
