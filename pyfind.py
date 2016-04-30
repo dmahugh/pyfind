@@ -157,4 +157,4 @@ class MatchPrinter(object):
 
 #-------------------------------------------------------------------------------
 if __name__ == '__main__':
-    HITLIST = get_matches(searchfor='import os', startdir='.', subdirs=True)
+    print('__main__()')

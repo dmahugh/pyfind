@@ -19,6 +19,14 @@ By default, pyfind searches all .py files in the current folder. For example:
 
 ![simple search](https://raw.githubusercontent.com/dmahugh/pyfind/master/images/simplesearch.png)
 
-Note that each filename is followed by the hits within that file, and a summary at the end shows the total number of hits, files and folders. The -nh or --nohits option can be used to see a summary of the matching files only:
+Note that each filename is followed by the hits within that file, and a summary at the end shows the total number of hits, files and folders. The *-nh* or *--nohits* option can be used to see a summary of the matching files only:
 
-![simple search](https://raw.githubusercontent.com/dmahugh/pyfind/master/images/nohits.png)
+![nohits](https://raw.githubusercontent.com/dmahugh/pyfind/master/images/nohits.png)
+
+To search subfolders, add the *-s* or *--subdirs* option. Hits are grouped by folder:
+
+![subdirs](https://raw.githubusercontent.com/dmahugh/pyfind/master/images/subdirs.png)
+
+/// filetypes
+
+/// allfolders
