@@ -29,8 +29,8 @@ def cli(searchfor, startdir, subdirs, nohits, nofiles, allfolders):
      |___|___|___|___|___|   SEARCHFOR = text to search for
        |___|___|___|___|     STARTDIR  = folder to be searched
          |___|___|___|
-           |___|___|         Prints search results to console.
-             |___|
+           |___|___|
+             |___|           Prints search results to console.
                |
     """
     get_matches(searchfor=searchfor, startdir=startdir, subdirs=subdirs,
