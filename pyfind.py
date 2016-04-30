@@ -25,13 +25,11 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
               help="Search ALL folders (not just _pyfind folders).")
 def cli(searchfor, startdir, subdirs, nohits, nofiles, allfolders):
     """\b
-    _______________________
-     |___|___|___|___|___|   SEARCHFOR = text to search for
-       |___|___|___|___|     STARTDIR  = folder to be searched
-         |___|___|___|
-           |___|___|
-             |___|           Prints search results to console.
-               |
+    _______________
+     |___|___|___|     SEARCHFOR = text to search for
+       |___|___|       STARTDIR  = folder to be searched
+         |___|
+           |           Prints search results to console.
     """
     get_matches(searchfor=searchfor, startdir=startdir, subdirs=subdirs,
                 allfolders=allfolders, nohits=nohits, nofiles=nofiles)
