@@ -67,7 +67,7 @@ def get_matches(*, searchfor='', startdir=os.getcwd(), subdirs=False,
         for file in files:
             if os.path.splitext(file)[1].lower() in filetypes:
                 fullname = os.path.join(root, file)
-                with open(fullname, 'r') as searchfile:
+                with open(fullname, 'r', errors='replace') as searchfile:
                     for lineno, line in enumerate(searchfile, 1):
                         if searchfor.lower() in line.lower():
                             match = {'folder': root, 'filename': file,
