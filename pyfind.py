@@ -14,7 +14,6 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.argument('startdir', default='.', metavar='<startdir>')
 @click.argument('searchfor', metavar='searchfor')
 @click.command(context_settings=CONTEXT_SETTINGS, options_metavar='<options>')
-@click.version_option(version='1.0', prog_name='PyFind')
 @click.option('-s', '--subdirs', is_flag=True,
               help='Search subdirectories.')
 @click.option('-af', '--allfolders', is_flag=True,
@@ -27,6 +26,7 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
               help="Don't display individual search hits.")
 @click.option('-nf', '--nofiles', is_flag=True,
               help="Don't display filenames/folders.")
+@click.version_option(version='1.0', prog_name='PyFind')
 def cli(searchfor, startdir, subdirs, filetypes, nohits, nofiles, allfolders):
     """\b
     _______________
