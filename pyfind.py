@@ -30,10 +30,10 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 def cli(searchfor, startdir, subdirs, filetypes, nohits, nofiles, allfolders):
     """\b
     _______________
-     |___|___|___|    searchfor = text to search for (required)
-       |___|___|      startdir  = folder to be searched (default=current)
+     |___|___|___|          searchfor = text to search for (required)
+       |___|___|            startdir  = folder to be searched (default=current)
          |___|
-           |          Prints search results to console.
+           |                Prints search results to console.
     """
 
     # convert filetypes to a list
