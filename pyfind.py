@@ -9,7 +9,6 @@ import os
 
 import click
 
-#------------------------------------------------------------------------------
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.argument('startdir', default='.', metavar='<startdir>')
 @click.argument('searchfor', metavar='searchfor')
@@ -27,7 +26,8 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.option('-nf', '--nofiles', is_flag=True,
               help="Don't display filenames/folders.")
 @click.version_option(version='1.0', prog_name='PyFind')
-def cli(searchfor, startdir, subdirs, filetypes, nohits, nofiles, allfolders):
+def cli(searchfor, startdir, subdirs, filetypes, #---------------------------<<<
+        nohits, nofiles, allfolders):
     """\b
     _______________
      |___|___|___|          searchfor = text to search for (required)
@@ -45,9 +45,9 @@ def cli(searchfor, startdir, subdirs, filetypes, nohits, nofiles, allfolders):
     get_matches(searchfor=searchfor, startdir=startdir, subdirs=subdirs,
                 filetypes=typelist, allfolders=allfolders, nohits=nohits, nofiles=nofiles)
 
-#------------------------------------------------------------------------------
-def get_matches(*, searchfor='', startdir=os.getcwd(), subdirs=False,
-                filetypes=None, allfolders=False, nohits=False, nofiles=False):
+def get_matches(*, searchfor='', startdir=os.getcwd(), #---------------------<<<
+                subdirs=False, filetypes=None, allfolders=False,
+                nohits=False, nofiles=False):
     """Search text files, return list of matches.
 
     searchfor --> string to search for (not case-sensitive)
@@ -90,8 +90,7 @@ def get_matches(*, searchfor='', startdir=os.getcwd(), subdirs=False,
 
     return matchlist
 
-#-------------------------------------------------------------------------------
-def print_summary(hitlist):
+def print_summary(hitlist): #------------------------------------------------<<<
     """Print summary of search results: # of folders, files, matches.
 
     parameter = the list of dictionaries returned by get_matches().
@@ -112,8 +111,7 @@ def print_summary(hitlist):
 
     click.echo(click.style(summary.rjust(75), fg='cyan'), nl=False)
 
-#-------------------------------------------------------------------------------
-class MatchPrinter(object):
+class MatchPrinter(object): #------------------------------------------------<<<
     """Print matches as they're found.
     """
     def __init__(self):
@@ -160,6 +158,6 @@ class MatchPrinter(object):
                     toprint = toprint[:64] + '...'
                 click.echo(click.style(lineno_str + toprint, fg='cyan'))
 
-#-------------------------------------------------------------------------------
+# code for standalone execution
 if __name__ == '__main__':
     print('__main__()')
