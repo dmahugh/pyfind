@@ -1,6 +1,8 @@
 """Command-line tool for Python source-code search.
 
 cli() ------------> Handle command-line arguments.
+_settings --------> Namespace class for application context; to be replaced
+                      with Click's ctx object.
 get_matches() ----> Search text files, return list of matches.
 MatchPrinter -----> Class for printing matches.
 print_summary() --> Print # of folders, files, matches.
@@ -8,6 +10,8 @@ print_summary() --> Print # of folders, files, matches.
 import os
 
 import click
+
+from dougerino import filesize
 
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.argument('startdir', default='.', metavar='<startdir>')
@@ -25,9 +29,11 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
               help="Don't display individual search hits.")
 @click.option('-nf', '--nofiles', is_flag=True,
               help="Don't display filenames/folders.")
+@click.option('-t', '--totals', default=True, is_flag=True,
+              help="Don't display total folders/files/lines/bytes searched")
 @click.version_option(version='1.0', prog_name='PyFind')
 def cli(searchfor, startdir, subdirs, filetypes, #---------------------------<<<
-        nohits, nofiles, allfolders):
+        nohits, nofiles, totals, allfolders):
     """\b
     _______________
      |___|___|___|          searchfor = text to search for (required)
@@ -44,6 +50,19 @@ def cli(searchfor, startdir, subdirs, filetypes, #---------------------------<<<
 
     get_matches(searchfor=searchfor, startdir=startdir, subdirs=subdirs,
                 filetypes=typelist, allfolders=allfolders, nohits=nohits, nofiles=nofiles)
+
+    if totals:
+        click.echo('Searched: {0} folders, {1} files, {2} lines, {3} bytes'. \
+            format(_settings.folders_searched, _settings.files_searched,
+                   _settings.lines_searched, _settings.bytes_searched))
+
+class _settings: #-----------------------------------------------------------<<<
+    """This class exists to provide a namespace used for global settings.
+    """
+    folders_searched = 0
+    files_searched = 0
+    lines_searched = 0
+    bytes_searched = 0
 
 def get_matches(*, searchfor='', startdir=os.getcwd(), #---------------------<<<
                 subdirs=False, filetypes=None, allfolders=False,
@@ -75,11 +94,15 @@ def get_matches(*, searchfor='', startdir=os.getcwd(), #---------------------<<<
             del dirs[:] # don't search subfolders
         if not allfolders and not os.path.isfile(os.path.join(root, '_pyfind')):
             continue # don't search folders that don't have _pyfind
+        _settings.folders_searched += 1
         for file in files:
             if os.path.splitext(file)[1].lower() in filetypes:
+                _settings.files_searched += 1
                 fullname = os.path.join(root, file)
+                _settings.bytes_searched += filesize(fullname)
                 with open(fullname, 'r', errors='replace') as searchfile:
                     for lineno, line in enumerate(searchfile, 1):
+                        _settings.lines_searched += 1
                         if searchfor.lower() in line.lower():
                             match = {'folder': root, 'filename': file,
                                      'lineno': lineno, 'linetext': line}
@@ -109,7 +132,7 @@ def print_summary(hitlist): #------------------------------------------------<<<
     summary = '{0} matches / {1} files / {2} folders'.format(
         len(hitlist), len(filenames), len(folders))
 
-    click.echo(click.style(summary.rjust(75), fg='cyan'), nl=False)
+    click.echo(click.style(summary.rjust(75), fg='cyan'), nl=True)
 
 class MatchPrinter(object): #------------------------------------------------<<<
     """Print matches as they're found.
