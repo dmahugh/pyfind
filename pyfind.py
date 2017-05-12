@@ -155,7 +155,7 @@ class MatchPrinter(object): #------------------------------------------------<<<
 
         if folder != self.folder and not nofiles:
             click.echo(click.style('-'*abs(74-len(folder)), fg='blue'), nl=False)
-            click.echo(click.style(' ' + folder, fg='cyan'))
+            click.echo(click.style(' ' + folder, fg='white'))
             self.folder = folder
             # handle special case of the same-named file being a search hit
             # in two different folders, by resetting self.filename to an impossible
@@ -170,9 +170,7 @@ class MatchPrinter(object): #------------------------------------------------<<<
         if not nohits:
             # print the matching line
             lineno_str = str(lineno).rjust(6) + ': '
-            toprint = linetext.strip()
-            if len(toprint) > 67:
-                toprint = toprint[:64] + '...'
+            toprint = linetext.strip()[:67]
             try:
                 click.echo(click.style(lineno_str + toprint, fg='cyan'))
             except UnicodeEncodeError:
