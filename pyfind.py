@@ -8,6 +8,7 @@ MatchPrinter -----> Class for printing matches.
 print_summary() --> Print # of folders, files, matches.
 """
 import os
+import site
 
 import click
 
@@ -38,7 +39,7 @@ def cli(searchfor, startdir, subdirs, filetypes, #---------------------------<<<
     _______________
      |___|___|___|          searchfor = text to search for (required)
        |___|___|            startdir  = folder to be searched (default=current)
-         |___|
+         |___|                          '*packages' for installed packages source code
            |                Prints search results to console.
     """
 
@@ -71,6 +72,8 @@ def get_matches(*, searchfor='', startdir=os.getcwd(), #---------------------<<<
 
     searchfor --> string to search for (not case-sensitive)
     startdir ---> path to folder to be searched
+                  special case: '*packages' to search source code for installed
+                  Python packages
     subdirs ----> whether to search subdirectories of dir
     filetypes --> list of file types (extensions) to search; lowercase
     allfolders -> whether to search all folders; if false, only folders with a
@@ -85,6 +88,11 @@ def get_matches(*, searchfor='', startdir=os.getcwd(), #---------------------<<<
         return []
     if not filetypes:
         filetypes = ['.py'] # default is .py if no filetypes provided
+    if startdir.lower().startswith('*packages'):
+        # special case: search installed packages only
+        startdir = site.getsitepackages()[-1]
+        subdirs = True # always search subdirs for this option
+        allfolders = True
 
     output = MatchPrinter()
 
@@ -154,7 +162,7 @@ class MatchPrinter(object): #------------------------------------------------<<<
         linetext = match_tuple['linetext']
 
         if folder != self.folder and not nofiles:
-            click.echo(click.style('-'*abs(74-len(folder)), fg='blue'), nl=False)
+            click.echo(click.style('-'*abs(107-len(folder)), fg='blue'), nl=False)
             click.echo(click.style(' ' + folder, fg='white'))
             self.folder = folder
             # handle special case of the same-named file being a search hit
@@ -170,7 +178,7 @@ class MatchPrinter(object): #------------------------------------------------<<<
         if not nohits:
             # print the matching line
             lineno_str = str(lineno).rjust(6) + ': '
-            toprint = linetext.strip()[:67]
+            toprint = linetext.strip()[:100]
             try:
                 click.echo(click.style(lineno_str + toprint, fg='cyan'))
             except UnicodeEncodeError:
