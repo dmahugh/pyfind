@@ -9,6 +9,7 @@ print_summary() --> Print # of folders, files, matches.
 """
 import os
 import site
+import sys
 
 import click
 
@@ -39,8 +40,8 @@ def cli(searchfor, startdir, subdirs, filetypes, #---------------------------<<<
     _______________
      |___|___|___|          searchfor = text to search for (required)
        |___|___|            startdir  = folder to be searched (default=current)
-         |___|                          '*packages' for installed packages source code
-           |                Prints search results to console.
+         |___|                          '*packages' = installed packages
+           |                            '*stdlib' = Python standard library
     """
 
     # convert filetypes to a list
@@ -71,9 +72,9 @@ def get_matches(*, searchfor='', startdir=os.getcwd(), #---------------------<<<
     """Search text files, return list of matches.
 
     searchfor --> string to search for (not case-sensitive)
-    startdir ---> path to folder to be searched
-                  special case: '*packages' to search source code for installed
-                  Python packages
+    startdir ---> path to folder to be searched; special cases:
+                  '*packages' = installed Python packages
+                  '*stdlib' = Python standard library
     subdirs ----> whether to search subdirectories of dir
     filetypes --> list of file types (extensions) to search; lowercase
     allfolders -> whether to search all folders; if false, only folders with a
@@ -88,10 +89,15 @@ def get_matches(*, searchfor='', startdir=os.getcwd(), #---------------------<<<
         return []
     if not filetypes:
         filetypes = ['.py'] # default is .py if no filetypes provided
-    if startdir.lower().startswith('*packages'):
-        # special case: search installed packages only
+    if startdir.lower().startswith('*package'):
+        # special case: search installed packages source code
         startdir = site.getsitepackages()[-1]
-        subdirs = True # always search subdirs for this option
+        subdirs = True
+        allfolders = True
+    if startdir.lower().startswith('*stdlib'):
+        # special case: search Python standard library source code
+        startdir = os.path.join(sys.exec_prefix, 'Lib')
+        subdirs = True
         allfolders = True
 
     output = MatchPrinter()
