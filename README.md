@@ -34,3 +34,11 @@ By default, pyfind only searches .py files. Use the *-ft* or *--filetypes* optio
 By default, pyfind only searches folders that contain a file named *_pyfind*. I use this option to limit searches to my own code &mdash; there's a *_pyfind* file in each folder where my code resides. You can force pyfind to search all folders with the *-af* or *--allfolders* option:
 
 ![allfolders](https://raw.githubusercontent.com/dmahugh/pyfind/master/images/allfolders.png)
+
+### special cases
+Pyfind supports two special cases for the _startdir_ argument that specifies the root folder to be searched:
+
+* _*packages_ = search the source code of all installed Python packages
+* _*stdlib_ = search the source code of the Python standard library
+
+Note that these options work with the currently active virtual environment, if any.
