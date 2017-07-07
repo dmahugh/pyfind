@@ -1,11 +1,5 @@
-"""Command-line tool for Python source-code search.
-
-cli() ------------> Handle command-line arguments.
-_settings --------> Namespace class for application context; to be replaced
-                      with Click's ctx object.
-get_matches() ----> Search text files, return list of matches.
-MatchPrinter -----> Class for printing matches.
-print_summary() --> Print # of folders, files, matches.
+"""pyfind.py
+Command-line tool for Python source-code search.
 """
 import os
 import site
@@ -19,8 +13,9 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.argument('startdir', default='.', metavar='<startdir>')
 @click.argument('searchfor', metavar='searchfor')
 @click.command(context_settings=CONTEXT_SETTINGS, options_metavar='<options>')
-@click.option('-s', '--subdirs', is_flag=True,
-              help='Search subdirectories.')
+@click.option('-d', '--depth', default='*',
+              help='Search depth, #subdirs or *. ' + \
+              'Default: -d* (all subdirs)')
 @click.option('-af', '--allfolders', is_flag=True,
               help='Search ALL folders. If omitted, ' +
               'only searches folders that have a _pyfind file.')
@@ -34,8 +29,7 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.option('-t', '--totals', default=True, is_flag=True,
               help="Don't display total folders/files/lines/bytes searched")
 @click.version_option(version='1.0', prog_name='PyFind')
-def cli(searchfor, startdir, subdirs, filetypes, #---------------------------<<<
-        nohits, nofiles, totals, allfolders):
+def cli(searchfor, startdir, filetypes, nohits, nofiles, totals, allfolders, depth):
     """\b
     _______________
      |___|___|___|          searchfor = text to search for (required)
@@ -44,21 +38,20 @@ def cli(searchfor, startdir, subdirs, filetypes, #---------------------------<<<
            |                            '*stdlib' = Python standard library
     """
 
-    # convert filetypes to a list
-    if not filetypes:
-        typelist = []
-    else:
+    if filetypes:
         typelist = ['.' + _.lower() for _ in filetypes.split('/')]
+    else:
+        typelist = []
 
-    get_matches(searchfor=searchfor, startdir=startdir, subdirs=subdirs,
-                filetypes=typelist, allfolders=allfolders, nohits=nohits, nofiles=nofiles)
+    get_matches(searchfor=searchfor, startdir=startdir, filetypes=typelist,
+                allfolders=allfolders, depth=depth, nohits=nohits, nofiles=nofiles)
 
     if totals:
         click.echo('Searched: {0} folders, {1} files, {2} lines, {3} bytes'. \
             format(_settings.folders_searched, _settings.files_searched,
                    _settings.lines_searched, _settings.bytes_searched))
 
-class _settings: #-----------------------------------------------------------<<<
+class _settings:
     """This class exists to provide a namespace used for global settings.
     """
     folders_searched = 0
@@ -66,16 +59,15 @@ class _settings: #-----------------------------------------------------------<<<
     lines_searched = 0
     bytes_searched = 0
 
-def get_matches(*, searchfor='', startdir=os.getcwd(), #---------------------<<<
-                subdirs=False, filetypes=None, allfolders=False,
-                nohits=False, nofiles=False):
+def get_matches(*, searchfor='', startdir=os.getcwd(), filetypes=None,
+                allfolders=False, depth='*', nohits=False, nofiles=False):
     """Search text files, return list of matches.
 
     searchfor --> string to search for (not case-sensitive)
     startdir ---> path to folder to be searched; special cases:
                   '*packages' = installed Python packages
                   '*stdlib' = Python standard library
-    subdirs ----> whether to search subdirectories of dir
+    depth ------> subdir depth to search; default: * (all)
     filetypes --> list of file types (extensions) to search; lowercase
     allfolders -> whether to search all folders; if false, only folders with a
                   _pyfind file in them are searched
@@ -92,20 +84,24 @@ def get_matches(*, searchfor='', startdir=os.getcwd(), #---------------------<<<
     if startdir.lower().startswith('*package'):
         # special case: search installed packages source code
         startdir = site.getsitepackages()[-1]
-        subdirs = True
         allfolders = True
     if startdir.lower().startswith('*stdlib'):
         # special case: search Python standard library source code
         startdir = os.path.join(sys.exec_prefix, 'Lib')
-        subdirs = True
+        depth = '1' # top-level subdirs only, to not search tests, etc.
+        # note: depth '1' misses the source of a few modules (e.g., xml)
         allfolders = True
 
     output = MatchPrinter()
 
     matchlist = []
     for root, dirs, files in os.walk(startdir):
-        if not subdirs:
-            del dirs[:] # don't search subfolders
+        if root.lower().endswith('__pycache__'):
+            continue # don't search __pycache__ folders
+
+        root_depth = root.replace(startdir, '').count('\\')
+        if '*' not in depth and root_depth == int(depth):
+            del dirs[:] # don't search subfolders of here
         if not allfolders and not os.path.isfile(os.path.join(root, '_pyfind')):
             continue # don't search folders that don't have _pyfind
         _settings.folders_searched += 1
@@ -127,7 +123,7 @@ def get_matches(*, searchfor='', startdir=os.getcwd(), #---------------------<<<
 
     return matchlist
 
-def print_summary(hitlist): #------------------------------------------------<<<
+def print_summary(hitlist):
     """Print summary of search results: # of folders, files, matches.
 
     parameter = the list of dictionaries returned by get_matches().
@@ -148,7 +144,7 @@ def print_summary(hitlist): #------------------------------------------------<<<
 
     click.echo(click.style(summary.rjust(75), fg='cyan'), nl=True)
 
-class MatchPrinter(object): #------------------------------------------------<<<
+class MatchPrinter(object):
     """Print matches as they're found.
     """
     def __init__(self):
