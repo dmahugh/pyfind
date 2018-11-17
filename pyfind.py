@@ -7,8 +7,6 @@ import sys
 
 import click
 
-from dougerino import filesize
-
 CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 
 
@@ -150,7 +148,7 @@ def get_matches(
             if os.path.splitext(file)[1].lower() in filetypes:
                 _settings.files_searched += 1
                 fullname = os.path.join(root, file)
-                _settings.bytes_searched += filesize(fullname)
+                _settings.bytes_searched += os.stat(fullname).st_size
                 with open(fullname, "r", errors="replace") as searchfile:
                     for lineno, line in enumerate(searchfile, 1):
                         _settings.lines_searched += 1
