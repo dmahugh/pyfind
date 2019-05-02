@@ -127,7 +127,7 @@ def get_matches(
 
     if startdir.lower().startswith("*project"):
         # this is a special case, which we handle here and return
-        pyfind_folder = Path(os.path.realpath(__file__)).parent
+        pyfind_folder = Path(__file__).resolve().parent
         projects_file = Path.joinpath(pyfind_folder, "projects.txt")
         if not projects_file.is_file():
             click.echo(click.style(f"FILE NOT FOUND: {projects_file}", fg="red"))
@@ -220,7 +220,7 @@ def search_file(filename, searchfor, root_dir):
     fullname = str(Path(root_dir).joinpath(filename))
     _settings.bytes_searched += Path(fullname).stat().st_size
 
-    if os.path.splitext(filename)[1].lower() == ".ipynb":
+    if Path(filename).suffix.lower() == ".ipynb":
         matches = []
         # special case for searching Jupyter notebook files
         with open(fullname, "r", encoding="utf-8") as notebook_file:
