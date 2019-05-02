@@ -41,9 +41,9 @@ The ```-af```/```--allfolders``` command line option controls which folders are 
 
 ### searching the Python standard library
 
-The ```*stdlib``` option for the starting folder is a shortcut for searching the Python standard library source code for the currently active Python interpreter. For example, here's a search for the use of ```joinpath``` in the standard library of Python 3.6.8:
+The ```*stdlib``` option for the starting folder is a shortcut for searching the Python standard library source code for the currently active Python interpreter. For example, here's a search for ```spam``` in the standard library of Python 3.6.8:
 
-![*stdlib search](images/joinpath.png)
+![*stdlib search](images/stdlib.png)
 
 ### searching installed packages
 
