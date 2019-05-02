@@ -1,7 +1,10 @@
 # don't include these files
+.gitignore
 _todo.txt
+projects.txt
 
 # don't include these subfolders
 __pycache__/
 .cache/
 *.egg-info/
+backups/
