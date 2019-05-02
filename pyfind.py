@@ -118,59 +118,71 @@ def get_matches(
     Returns a list of dictionaries with these keys: folder, filename,
     location, linetext.
     """
-    output = MatchPrinter()
-
     if not searchfor:
         return []
     if not filetypes:
         filetypes = [".py", ".ipynb"]  # default if no filetypes provided
+
+    output = MatchPrinter()
+
     if startdir.lower().startswith("*project"):
         # this is a special case, which we handle here and return
         pyfind_folder = Path(os.path.realpath(__file__)).parent
         projects_file = Path.joinpath(pyfind_folder, "projects.txt")
-        if not os.path.isfile(projects_file):
+        if not projects_file.is_file():
             click.echo(click.style(f"FILE NOT FOUND: {projects_file}", fg="red"))
             return
         matchlist = []
-        with open(projects_file) as folder_list:
-            for line in folder_list:
-                folder = line.strip()
-                if not os.path.isdir(folder):
-                    click.echo(click.style(f"FOLDER NOT FOUND: {folder}", fg="red"))
+        for line in projects_file.read_text().splitlines():
+            folder = line.strip()
+            if not Path(folder).is_dir():
+                click.echo(click.style(f"FOLDER NOT FOUND: {folder}", fg="red"))
+                continue
+            for filename in glob(f"{folder}/*.*"):
+                file_to_search = Path(filename)
+                if file_to_search.suffix not in filetypes:
                     continue
-                for filename in glob(f"{folder}/*.*"):
-                    if os.path.splitext(filename)[1].lower() not in filetypes:
-                        continue
-                    for match in search_file(os.path.basename(filename),
-                                             searchfor,
-                                             folder):
-                        matchlist.append(match)
-                        output.display(match, nohits, nofiles)
+                for match in search_file(file_to_search.name,
+                                         searchfor,
+                                         folder):
+                    matchlist.append(match)
+                    output.display(match, nohits, nofiles)
+
         print_summary(matchlist)
         return
+
     if startdir.lower().startswith("*package"):
         # special case: search installed packages source code
-        startdir = site.getsitepackages()[-1]
+        search_root = Path(site.getsitepackages()[-1])
         allfolders = True
-    if startdir.lower().startswith("*stdlib"):
+    elif startdir.lower().startswith("*stdlib"):
         # special case: search Python standard library source code
-        startdir = os.path.join(sys.exec_prefix, "Lib")
+        search_root = Path(sys.exec_prefix).joinpath("Lib")
         depth = "1"  # top-level subdirs only, to not search tests, etc.
         # note: depth '1' misses the source of a few modules (e.g., xml)
         allfolders = True
+    else:
+        # explicit search folder specified on command line
+        search_root = Path(startdir)
 
     matchlist = []
-    for root, dirs, files in os.walk(startdir):
+    for root, dirs, files in os.walk(search_root):
+        root_folder = Path(root)
         if root.lower().endswith("__pycache__"):
             continue  # don't search __pycache__ folders
-        root_depth = root.replace(startdir, "").count("\\")
+
+        subfolder = root_folder.relative_to(search_root)
+        # There must be a more Pythonic way to set root_depth with pathlib, but we
+        # haven't figured that out yet.
+        root_depth = str(subfolder).count("\\") + 1
+
         if "*" not in depth and root_depth == int(depth):
             del dirs[:]  # don't search subfolders of here
-        if not allfolders and not os.path.isfile(os.path.join(root, "_pyfind")):
+        if not allfolders and not root_folder.joinpath("_pyfind").is_file():
             continue  # don't search folders that don't have _pyfind
         _settings.folders_searched += 1
         for file in files:
-            if os.path.splitext(file)[1].lower() in filetypes:
+            if Path(file).suffix.lower() in filetypes:
                 _settings.files_searched += 1
                 for match in search_file(file, searchfor, root):
                     matchlist.append(match)
@@ -205,8 +217,8 @@ def print_summary(hitlist):
 def search_file(filename, searchfor, root_dir):
     """Searches a file and returns all hits found.
     """
-    fullname = os.path.join(root_dir, filename)
-    _settings.bytes_searched += os.stat(fullname).st_size
+    fullname = str(Path(root_dir).joinpath(filename))
+    _settings.bytes_searched += Path(fullname).stat().st_size
 
     if os.path.splitext(filename)[1].lower() == ".ipynb":
         matches = []
