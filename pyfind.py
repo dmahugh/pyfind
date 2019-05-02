@@ -19,7 +19,7 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
     "-d",
     "--depth",
     default="*",
-    help="Search depth, #subdirs or *. " + "Default: -d* (all subdirs), except for *stdlib which defaults to -d1 (to avoid searching test subfolders)",
+    help="Search depth: 0 to search specified folder only, 1 to search folder plus top-level subfolders, * to search all subfolders; default=*",
 )
 @click.option(
     "-af",
@@ -199,7 +199,7 @@ def print_summary(hitlist):
         len(hitlist), len(filenames), len(folders)
     )
 
-    click.echo(click.style(summary.rjust(75), fg="cyan"), nl=True)
+    click.echo(click.style(summary.rjust(75), fg="green"), nl=True)
 
 
 def search_file(filename, searchfor, root_dir):

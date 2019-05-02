@@ -23,35 +23,40 @@ Pyfind should work with any Python 3 version, and ituses the [Click](http://clic
 
 After installation, create a ```projects.txt``` file in the pyfind folder that contains all of the local folders/paths you'd like to include in the default search, one on each line.
 
-After it's installed, you can use ```pyfind``` at a command prompt. For example, to display the help screen:
+After it's installed, you can use ```pyfind``` at a command prompt. For example, use ```pyfind -h``` to display the help screen:
 
-![help screen](https://raw.githubusercontent.com/dmahugh/pyfind/master/images/helpscreen.png)
+![help screen](images/helpscreen.png)
 
 ## Usage examples
 
-By default, pyfind searches all .py files in the current folder. For example:
+In addition to the default search scope (all project folders defined in the ```projects.txt``` file), three other usages are supported as covered below.
 
-![simple search](https://raw.githubusercontent.com/dmahugh/pyfind/master/images/simplesearch.png)
+### explicitly specify a search folder
 
-Note that each filename is followed by the hits within that file, and a summary at the end shows the total number of hits, files and folders. The *-nh* or *--nohits* option can be used to see a summary of the matching files only:
+You can explicitly specify a search folder on the command line, to search files in that folder as well as its subfolders.
 
-![nohits](https://raw.githubusercontent.com/dmahugh/pyfind/master/images/nohits.png)
+The ```-d```/```--depth``` command line option controls the depth of searching subfolders. For example, you can use ```-d0``` to avoid searching subfolders (which may contain tests, etc.).
 
-To search subfolders, add the *-s* or *--subdirs* option. Hits are grouped by folder:
+The ```-af```/```--allfolders``` command line option controls which folders are searched. By default, pyfind only searches folders that contain a file named ```_pyfind```. (The content of the file doesn't matter.) Use the ```-af``` option to override this behavior.
 
-![subdirs](https://raw.githubusercontent.com/dmahugh/pyfind/master/images/subdirs.png)
+### searching the Python standard library
 
-By default, pyfind only searches .py files. Use the *-ft* or *--filetypes* option to specify other file types to be searched. You can specify multiple file types by separating the extensions with /:
+The ```*stdlib``` option for the starting folder is a shortcut for searching the Python standard library source code for the currently active Python interpreter. For example, here's a search for the use of ```joinpath``` in the standard library of Python 3.6.8:
 
-![filetypes](https://raw.githubusercontent.com/dmahugh/pyfind/master/images/filetypes.png)
+![*stdlib search](images/joinpath.png)
 
-By default, pyfind only searches folders that contain a file named *_pyfind*. I use this option to limit searches to my own code &mdash; there's a *_pyfind* file in each folder where my code resides. You can force pyfind to search all folders with the *-af* or *--allfolders* option:
+### searching installed packages
 
-![allfolders](https://raw.githubusercontent.com/dmahugh/pyfind/master/images/allfolders.png)
-### special cases
-Pyfind supports two special cases for the _startdir_ argument that specifies the root folder to be searched:
+The ```*packages``` option for the starting folder is a shortcut for searching across the Python source code for all packages installed in the current environment. For example, here's a search across over 2 million lines of code in my current bloated Python environment for use of the ```post``` method in the ```Requests``` package:
 
-* _*packages_ = search the source code of all installed Python packages
-* _*stdlib_ = search the source code of the Python standard library
+![*packages search](images/packages.png)
 
-Note that these options work with the currently active virtual environment, if any.
+# Contributing
+Pyfind is a work in progress &mdash; pull requests, feature requests and issues welcome.
+
+I've implemented the functionality I find useful, but I'm interested in knowing what other types of functionality may be useful to others. Please log an [issue](https://github.com/dmahugh/pyfind/issues) if you have a suggestion. Thanks!
+
+# License
+Pyfind is licensed under the [MIT License](https://github.com/dmahugh/pyfind/blob/master/LICENSE).
+
+Copyright &copy; 2016 by Doug Mahugh
