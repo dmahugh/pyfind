@@ -1,7 +1,5 @@
 # pyfind
-Python source-code search command-line tool
-
-This is a tool for searching Python source code across multiple projects or packages. I use it when I'm writing code to accomplish some task and want to quickly see examples of how I've accomplished that same task before.
+Pyfind is a command-line tool for searching Python source code across multiple projects or packages. I use it when I'm writing code to accomplish some task and want to quickly see examples of how I've accomplished that same task before.
 
 The default behavior is to search all local project folders defined in a ```projects.txt``` file in the pyfind home folder. For example, here's a truncated screenshot of a search for use of the ```json.dumps``` method across my projects, which I might do to remind myself of its syntax:
 
@@ -52,9 +50,7 @@ The ```*packages``` option for the starting folder is a shortcut for searching a
 ![*packages search](images/packages.png)
 
 # Contributing
-Pyfind is a work in progress &mdash; pull requests, feature requests and issues welcome.
-
-I've implemented the functionality I find useful, but I'm interested in knowing what other types of functionality may be useful to others. Please log an [issue](https://github.com/dmahugh/pyfind/issues) if you have a suggestion. Thanks!
+Pyfind is a work in progress &mdash; pull requests, feature requests and issues welcome. I've implemented the functionality I find useful, but I'm interested in knowing what other types of functionality may be useful to others. Please log an [issue](https://github.com/dmahugh/pyfind/issues) if you have a suggestion. Thanks!
 
 # License
 Pyfind is licensed under the [MIT License](https://github.com/dmahugh/pyfind/blob/master/LICENSE).
