@@ -13,7 +13,7 @@ Any file type(s) can be searched, and the default is to search ```.py``` source 
 
 ## Installation
 
-Pyfind should work with any Python 3 version, and ituses the [Click](http://click.pocoo.org/5/) CLI library. I like to install it as editable, so that I can make changes and have them show up immediately, so I follow these steps to install:
+Pyfind requires Python 3.6 or above, and it uses the [Click](http://click.pocoo.org/5/) CLI library. I like to install it as editable, so that I can make changes and have them show up immediately, so I follow these steps to install:
 
 * Clone this repo
 * Install prerequisites with ```pip install -r requirements.txt```
@@ -33,9 +33,7 @@ In addition to the default search scope (all project folders defined in the ```p
 
 You can explicitly specify a search folder on the command line, to search files in that folder as well as its subfolders.
 
-The ```-d```/```--depth``` command line option controls the depth of searching subfolders. For example, you can use ```-d0``` to avoid searching subfolders (which may contain tests, etc.).
-
-The ```-af```/```--allfolders``` command line option controls which folders are searched. By default, pyfind only searches folders that contain a file named ```_pyfind```. (The content of the file doesn't matter.) Use the ```-af``` option to override this behavior.
+The ```-s```/```--subfolders``` command line option controls whether to search subfolders. By default, subfolders are not searched, but you can include this option to search all subfolders.
 
 ### searching the Python standard library
 
