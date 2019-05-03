@@ -1,22 +1,7 @@
 [MASTER]
 
-# Specify a configuration file.
-#rcfile=
-
-# Python code to execute, usually for sys.path manipulation such as
-# pygtk.require().
-#init-hook=
-
-# Add files or directories to the blacklist. They should be base names, not
-# paths.
-ignore=CVS
-
 # Pickle collected data for later comparisons.
 persistent=yes
-
-# List of plugins (as comma separated values of python modules names) to load,
-# usually to register additional checkers.
-load-plugins=
 
 # Use multiple processes to speed up Pylint.
 jobs=1
@@ -28,7 +13,7 @@ unsafe-load-any-extension=no
 # A comma-separated list of package or module names from where C extensions may
 # be loaded. Extensions are loading into the active Python interpreter and may
 # run arbitrary code
-extension-pkg-whitelist=
+extension-pkg-whitelist=pyodbc
 
 # Allow optimization of some AST trees. This will activate a peephole AST
 # optimizer, which will apply various small optimizations. For instance, it can
@@ -38,17 +23,7 @@ extension-pkg-whitelist=
 # AST will be different than the one from reality.
 optimize-ast=no
 
-
 [MESSAGES CONTROL]
-
-# Only show warnings with the listed confidence levels. Leave empty to show
-# all. Valid levels: HIGH, INFERENCE, INFERENCE_FAILURE, UNDEFINED
-confidence=
-
-# Enable the message, report, category or checker with the given id(s). You can
-# either give multiple identifier separated by comma (,) or put this option
-# multiple time. See also the "--disable" option for examples.
-#enable=
 
 # Disable the message, report, category or checker with the given id(s). You
 # can either give multiple identifiers separated by comma (,) or put this
@@ -59,8 +34,7 @@ confidence=
 # --enable=similarities". If you want to run only the classes checker, but have
 # no Warning level messages displayed, use"--disable=all --enable=classes
 # --disable=W"
-disable=oct-method,old-ne-operator,import-star-module-level,setslice-method,reduce-builtin,standarderror-builtin,dict-iter-method,print-statement,raising-string,suppressed-message,long-builtin,xrange-builtin,nonzero-method,dict-view-method,coerce-builtin,delslice-method,file-builtin,long-suffix,old-division,getslice-method,useless-suppression,round-builtin,raw_input-builtin,intern-builtin,execfile-builtin,reload-builtin,metaclass-assignment,next-method-called,too-many-lines,backtick,parameter-unpacking,coerce-method,zip-builtin-not-iterating,range-builtin-not-iterating,hex-method,apply-builtin,using-cmp-argument,unicode-builtin,old-octal-literal,no-absolute-import,indexing-exception,unichr-builtin,cmp-method,cmp-builtin,old-raise-syntax,map-builtin-not-iterating,basestring-builtin,input-builtin,unpacking-in-except,filter-builtin-not-iterating,buffer-builtin,too-few-public-methods,too-many-arguments,too-many-locals
-
+disable=oct-method,old-ne-operator,import-star-module-level,setslice-method,reduce-builtin,standarderror-builtin,dict-iter-method,print-statement,raising-string,suppressed-message,long-builtin,xrange-builtin,nonzero-method,dict-view-method,coerce-builtin,delslice-method,file-builtin,long-suffix,old-division,getslice-method,useless-suppression,round-builtin,raw_input-builtin,intern-builtin,execfile-builtin,reload-builtin,metaclass-assignment,next-method-called,too-many-lines,backtick,parameter-unpacking,coerce-method,zip-builtin-not-iterating,range-builtin-not-iterating,hex-method,apply-builtin,using-cmp-argument,unicode-builtin,old-octal-literal,no-absolute-import,indexing-exception,unichr-builtin,cmp-method,cmp-builtin,old-raise-syntax,map-builtin-not-iterating,basestring-builtin,input-builtin,unpacking-in-except,filter-builtin-not-iterating,buffer-builtin,too-few-public-methods,too-many-local-variables,too-many-arguments,too-many-branches,bad-continuation,too-many-locals
 
 [REPORTS]
 
@@ -75,7 +49,7 @@ output-format=text
 files-output=no
 
 # Tells whether to display a full report or only the messages
-reports=yes
+reports=no
 
 # Python expression which should return a note less than 10 (10 is the highest
 # note). You have access to the variables errors warning, statement which
@@ -84,25 +58,16 @@ reports=yes
 # (RP0004).
 evaluation=10.0 - ((float(5 * error + warning + refactor + convention) / statement) * 10)
 
-# Template used to display messages. This is a python new-style format string
-# used to format the message information. See doc for all details
-#msg-template=
-
-
 [BASIC]
 
 # List of builtins function names that should not be used, separated by a comma
 bad-functions=map,filter
 
 # Good variable names which should always be accepted, separated by a comma
-good-names=i,j,k,ex,Run,_
+good-names=_
 
 # Bad variable names which should always be refused, separated by a comma
 bad-names=foo,bar,baz,toto,tutu,tata
-
-# Colon-delimited sets of names that determine each other's naming style when
-# the name regexes allow several styles.
-name-group=
 
 # Include a hint for the correct naming format with invalid-name
 include-naming-hint=no
@@ -175,12 +140,10 @@ no-docstring-rgx=^_
 # ones are exempt.
 docstring-min-length=-1
 
-
 [ELIF]
 
 # Maximum number of nested blocks for function / method body
 max-nested-blocks=5
-
 
 [FORMAT]
 
@@ -213,19 +176,16 @@ indent-after-paren=4
 # Expected format of line ending, e.g. empty (any line ending), LF or CRLF.
 expected-line-ending-format=
 
-
 [LOGGING]
 
 # Logging modules to check that the string format arguments are in logging
 # function parameter format
 logging-modules=logging
 
-
 [MISCELLANEOUS]
 
 # List of note tags to take in consideration, separated by a comma.
 notes=FIXME,XXX,TODO
-
 
 [SIMILARITIES]
 
@@ -240,7 +200,6 @@ ignore-docstrings=yes
 
 # Ignore imports when computing similarities.
 ignore-imports=no
-
 
 [SPELLING]
 
@@ -258,29 +217,12 @@ spelling-private-dict-file=
 # --spelling-private-dict-file option instead of raising a message.
 spelling-store-unknown-words=no
 
-
 [TYPECHECK]
 
 # Tells whether missing members accessed in mixin class should be ignored. A
 # mixin class is detected if its name ends with "mixin" (case insensitive).
 ignore-mixin-members=yes
-
-# List of module names for which member attributes should not be checked
-# (useful for modules/projects where namespaces are manipulated during runtime
-# and thus existing member attributes cannot be deduced by static analysis. It
-# supports qualified module names, as well as Unix pattern matching.
-ignored-modules=
-
-# List of classes names for which member attributes should not be checked
-# (useful for classes with attributes dynamically set). This supports can work
-# with qualified names.
 ignored-classes=PurePath
-
-# List of members which are set dynamically and missed by pylint inference
-# system, and so shouldn't trigger E1101 when accessed. Python regular
-# expressions are accepted.
-generated-members=
-
 
 [VARIABLES]
 
@@ -291,14 +233,9 @@ init-import=no
 # not used).
 dummy-variables-rgx=_$|dummy
 
-# List of additional names supposed to be defined in builtins. Remember that
-# you should avoid to define new builtins when possible.
-additional-builtins=
-
 # List of strings which can identify a callback function by name. A callback
 # name must start or end with one of those strings.
 callbacks=cb_,_cb
-
 
 [CLASSES]
 
@@ -314,7 +251,6 @@ valid-metaclass-classmethod-first-arg=mcs
 # List of member names, which should be excluded from the protected access
 # warning.
 exclude-protected=_asdict,_fields,_replace,_source,_make
-
 
 [DESIGN]
 
@@ -352,24 +288,10 @@ max-public-methods=20
 # Maximum number of boolean expressions in a if statement
 max-bool-expr=5
 
-
 [IMPORTS]
 
 # Deprecated modules which should not be used, separated by a comma
 deprecated-modules=optparse
-
-# Create a graph of every (i.e. internal and external) dependencies in the
-# given file (report RP0402 must not be disabled)
-import-graph=
-
-# Create a graph of external dependencies in the given file (report RP0402 must
-# not be disabled)
-ext-import-graph=
-
-# Create a graph of internal dependencies in the given file (report RP0402 must
-# not be disabled)
-int-import-graph=
-
 
 [EXCEPTIONS]
 
