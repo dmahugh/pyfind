@@ -39,6 +39,8 @@ def cli(searchfor, startdir, filetypes, subfolders):
          |___|              *stdlib   = Python standard library
            |                *packages = installed packages in current environment
     """
+    # Note that the Click framework uses the above docstring for the help
+    # screen.
 
     if filetypes:
         typelist = ["." + _.lower() for _ in filetypes.split("/")]
@@ -63,9 +65,8 @@ def cli(searchfor, startdir, filetypes, subfolders):
 
 
 class _settings:
-    """This class exists to provide a namespace used for global settings.
+    """Provides a namespace used for global settings. Used only for totals.
     """
-
     folders_searched = 0
     files_searched = 0
     lines_searched = 0
@@ -73,15 +74,20 @@ class _settings:
 
 
 def get_matches(*, searchfor="", startdir=Path.cwd(), filetypes=None, subfolders=False):
-    """Search text files, return list of matches.
+    """Searches files and returns a list of matches.
 
-    searchfor --> string to search for (not case-sensitive)
-    startdir ---> path to folder to be searched; special cases:
-                  '*projects' = search projects listed in projects.txt
-                  '*packages' = installed Python packages
-                  '*stdlib' = Python standard library
-    subfolders -> whether to search subfolders
-    filetypes --> list of file types (extensions) to search; lowercase
+    Args:
+        searchfor: The string to search for (not case-sensitive).
+        startdir: Path to folder to be searched, or one of these special cases:
+                  *projects: search projects listed in projects.txt
+                  *packages: search installed Python packages
+                  *stdlib: search the Python standard library
+        subfolders: Whether to search subfolders.
+        filetypes: A list of file types (extensions) to be search. Each entry
+                   must be lowercase and include the preceding period.
+
+    Returns:
+        None
     """
     if not searchfor:
         return
@@ -143,10 +149,14 @@ def get_matches(*, searchfor="", startdir=Path.cwd(), filetypes=None, subfolders
 
 
 def print_summary(hitlist):
-    """Print summary of search results: # of folders, files, matches.
+    """Prints a summary of search results.
 
-    parameter = a list of matches. Each match is a dictionary with keys
-                folder, filename, location, linetext.
+    Args:
+        hitlist: A list of the matches found. Each match is a dictionary with
+                 these keys: folder, filename, location, linetext
+
+    Returns:
+        None
     """
     folders = []
     filenames = []
@@ -168,6 +178,15 @@ def print_summary(hitlist):
 
 def search_file(filename, searchfor, root_dir):
     """Searches a file and returns all hits found.
+
+    Args:
+        filename: Name of the file to be searched.
+        searchfor: The string to search for.
+        root_dir: The folder where the file is located.
+
+    Returns:
+        A list of the matches found. Each match is a dictionary with these
+        keys: folder, filename, location, linetext
     """
     fullname = str(Path(root_dir).joinpath(filename))
     _settings.bytes_searched += Path(fullname).stat().st_size
@@ -209,7 +228,7 @@ def search_file(filename, searchfor, root_dir):
 
 
 class MatchPrinter:
-    """Print matches as they're found.
+    """Prints matches as they're found.
     """
 
     def __init__(self):
