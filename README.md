@@ -47,10 +47,13 @@ The ```*packages``` option for the starting folder is a shortcut for searching a
 
 ![*packages search](images/packages.png)
 
-# Contributing
+## Tests
+Pytest unit tests are in the ```tests``` folder. Note that tests should be run with the ```pytest``` command from within that folder (and not from the project root folder).
+
+## Contributing
 Pyfind is a work in progress &mdash; pull requests, feature requests and issues welcome. I've implemented the functionality I find useful, but I'm interested in knowing what other types of functionality may be useful to others. Please log an [issue](https://github.com/dmahugh/pyfind/issues) if you have a suggestion. Thanks!
 
-# License
+## License
 Pyfind is licensed under the [MIT License](https://github.com/dmahugh/pyfind/blob/master/LICENSE).
 
 Copyright &copy; 2016 by Doug Mahugh
