@@ -8,7 +8,6 @@ import site
 import sys
 
 import click
-import pytest
 
 CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 
@@ -68,6 +67,7 @@ def cli(searchfor, startdir, filetypes, subfolders):
 class _settings:
     """Provides a namespace used for global settings. Used only for totals.
     """
+
     folders_searched = 0
     files_searched = 0
     lines_searched = 0
@@ -193,18 +193,17 @@ def search_file(file, searchfor, folder):
         keys: folder, filename, location, linetext
     """
 
-    # If filename was passed as a string, convert to a path.
     if isinstance(file, str):
+        # If filename was passed as a string, convert to a path.
         file = Path(file)
+    fullname = folder.joinpath(file)
 
-    #/// next, convert fullname to a Path object instead
-    fullname = str(folder.joinpath(file))
-    _settings.bytes_searched += Path(fullname).stat().st_size
+    _settings.bytes_searched += fullname.stat().st_size
 
     if file.suffix.lower() == ".ipynb":
         matches = []
         # special case for searching Jupyter notebook files
-        with open(fullname, "r", encoding="utf-8") as notebook_file:
+        with fullname.open(errors="replace") as notebook_file:
             notebook_data = json.loads(notebook_file.read())
         for cell_no, cell in enumerate(notebook_data["cells"]):
             if cell["cell_type"] == "code":
@@ -222,7 +221,7 @@ def search_file(file, searchfor, folder):
 
     # plain text search for all other file types
     matches = []
-    with open(fullname, "r", errors="replace") as searchfile:
+    with fullname.open(errors="replace") as searchfile:
         for lineno, line in enumerate(searchfile, 1):
             _settings.lines_searched += 1
             if searchfor.lower() in line.lower():
