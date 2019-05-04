@@ -181,7 +181,7 @@ def print_summary(hitlist):
                  these keys: folder, filename, location, linetext
 
     Returns:
-        None
+        None. Uses click.echo to print a summary to the console.
     """
     folders = []
     filenames = []
@@ -201,14 +201,15 @@ def print_summary(hitlist):
     click.echo(click.style(summary.rjust(75), fg="green"), nl=True)
 
 
-def search_file(file, searchfor, folder):
+def search_file(file, searchfor, folder=Path(".")):
     """Searches a file and returns all hits found.
 
     Args:
         file: File to be searched. May be either a pathlib.Path object, or a
               base filename (no folder/path) passed as a string.
         searchfor: The string to search for.
-        folder: The folder where the file is located (pathlib.Path).
+        folder: The folder where the file is located, as a pathlib.Path.
+            The folder argument is optional; defaults to Path(".") if omitted.
 
     Returns:
         A list of the matches found. Each match is a dictionary with these

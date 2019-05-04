@@ -46,6 +46,24 @@ def test_search_file_path2():
         assert search_for.lower() in search_result["linetext"].lower()
 
 
+def test_search_file_path3():
+    """function: search_file()
+    Tests calling search_file without a folder argument.
+    """
+
+    search_for = "Whatever"
+    search_in = Path("testdata.txt")
+    search_results = search_file(search_in,
+                                 search_for)
+
+    assert len(search_results) == 2
+    for search_result in search_results:
+        assert search_result["folder"] == "."
+        assert search_result["filename"] == search_in.name
+        assert search_result["location"] in ["3", "4"]
+        assert search_for.lower() in search_result["linetext"].lower()
+
+
 def test_search_file_str1():
     """function: search_file()
     Tests passing the searched filename a string.
@@ -74,6 +92,23 @@ def test_search_file_str2():
     search_results = search_file(search_in,
                                  search_for,
                                  Path("."))
+
+    assert len(search_results) == 2
+    for search_result in search_results:
+        assert search_result["folder"] == "."
+        assert search_result["filename"] == search_in
+        assert search_result["location"] in ["3", "4"]
+        assert search_for.lower() in search_result["linetext"].lower()
+
+def test_search_file_str3():
+    """function: search_file()
+    Tests calling search_file without a folder argument.
+    """
+
+    search_for = "Whatever"
+    search_in = "testdata.txt"
+    search_results = search_file(search_in,
+                                 search_for)
 
     assert len(search_results) == 2
     for search_result in search_results:

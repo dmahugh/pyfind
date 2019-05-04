@@ -47,6 +47,13 @@ The ```*packages``` option for the starting folder is a shortcut for searching a
 
 ![*packages search](images/packages.png)
 
+### calling search_file from other code
+The examples above all use pyfind as a command line tool, however it msy be
+useful to call the ```search_file``` function from other code to search a file. Here's
+an example:
+
+![programmatic use](images/search_file.png)
+
 ## Tests
 Pytest unit tests are in the ```tests``` folder. Note that tests should be run with the ```pytest``` command from within that folder (and not from the project root folder).
 
