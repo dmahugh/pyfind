@@ -15,7 +15,7 @@ def test_search_file_path1():
     """
 
     search_for = "pathlib"
-    search_in = Path("source.py")
+    search_in = Path("testdata.py")
     search_results = search_file(search_in,
                                  search_for,
                                  Path("."))
@@ -33,7 +33,7 @@ def test_search_file_path2():
     """
 
     search_for = "Whatever"
-    search_in = Path("textfile.txt")
+    search_in = Path("testdata.txt")
     search_results = search_file(search_in,
                                  search_for,
                                  Path("."))
@@ -52,7 +52,7 @@ def test_search_file_str1():
     """
 
     search_for = "pathlib"
-    search_in = "source.py"
+    search_in = "testdata.py"
     search_results = search_file(search_in,
                                  search_for,
                                  Path("."))
@@ -70,7 +70,7 @@ def test_search_file_str2():
     """
 
     search_for = "Whatever"
-    search_in = "textfile.txt"
+    search_in = "testdata.txt"
     search_results = search_file(search_in,
                                  search_for,
                                  Path("."))
@@ -88,7 +88,7 @@ def test_search_file_notebook():
     """
 
     search_for = "requests"
-    search_in = Path("pyfind test notebook.ipynb")
+    search_in = Path("testdata.ipynb")
     search_results = search_file(search_in,
                                  search_for,
                                  Path("."))
