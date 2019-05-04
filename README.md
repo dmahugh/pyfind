@@ -43,7 +43,7 @@ The ```*stdlib``` option for the starting folder is a shortcut for searching the
 
 ### searching installed packages
 
-The ```*packages``` option for the starting folder is a shortcut for searching across the Python source code for all packages installed in the current environment. For example, here's a search across over 2 million lines of code in my current bloated Python environment for use of the ```post``` method in the ```Requests``` package:
+The ```*packages``` option for the starting folder is a shortcut for searching across the Python source code for all packages installed in the current environment that pyfind is running in. For example, here's a search across over 2 million lines of code in my current bloated Python environment for use of the ```post``` method in the ```Requests``` package:
 
 ![*packages search](images/packages.png)
 
