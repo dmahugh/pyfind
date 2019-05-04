@@ -8,6 +8,7 @@ import site
 import sys
 
 import click
+import pytest
 
 CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 
@@ -105,17 +106,17 @@ def get_matches(*, searchfor="", startdir=Path.cwd(), filetypes=None, subfolders
             return
         matchlist = []
         for line in projects_file.read_text().splitlines():
-            folder = line.strip()
-            if not Path(folder).is_dir():
+            folder = Path(line.strip())
+            if not folder.is_dir():
                 click.echo(click.style(f"FOLDER NOT FOUND: {folder}", fg="red"))
                 continue
             _settings.folders_searched += 1
-            for filename in glob(f"{folder}/*.*"):
+            for filename in glob(str(folder.joinpath("*.*"))):
                 file_to_search = Path(filename)
                 if file_to_search.suffix not in filetypes:
                     continue
                 _settings.files_searched += 1
-                for match in search_file(file_to_search.name, searchfor, folder):
+                for match in search_file(file_to_search, searchfor, folder):
                     matchlist.append(match)
                     output.display(match)
 
@@ -129,20 +130,22 @@ def get_matches(*, searchfor="", startdir=Path.cwd(), filetypes=None, subfolders
         # special case: search Python standard library source code
         search_root = Path(sys.exec_prefix).joinpath("Lib")
     else:
-        # explicit search folder specified on command line
+        # An explicit search folder was specified on the command line.
         search_root = Path(startdir)
 
     matchlist = []
-    for root, dirs, files in os.walk(search_root):
-        if root.lower().endswith("__pycache__"):
-            continue  # don't search __pycache__ folders
+    for curdir, dirs, files in os.walk(search_root):
+        current_folder = Path(curdir)
+        if current_folder.name == "__pycache__":
+            continue  # Don't search __pycache__ folders.
         if not subfolders:
-            del dirs[:]  # don't search subfolders of here
+            del dirs[:]  # Don't search subfolders.
         _settings.folders_searched += 1
         for file in files:
-            if Path(file).suffix.lower() in filetypes:
+            file_to_search = Path(file)
+            if file_to_search.suffix.lower() in filetypes:
                 _settings.files_searched += 1
-                for match in search_file(file, searchfor, root):
+                for match in search_file(file_to_search, searchfor, current_folder):
                     matchlist.append(match)
                     output.display(match)
     print_summary(matchlist)
@@ -176,22 +179,29 @@ def print_summary(hitlist):
     click.echo(click.style(summary.rjust(75), fg="green"), nl=True)
 
 
-def search_file(filename, searchfor, root_dir):
+def search_file(file, searchfor, folder):
     """Searches a file and returns all hits found.
 
     Args:
-        filename: Name of the file to be searched.
+        file: File to be searched. May be either a pathlib.Path object, or a
+              base filename (no folder/path) passed as a string.
         searchfor: The string to search for.
-        root_dir: The folder where the file is located.
+        folder: The folder where the file is located (pathlib.Path).
 
     Returns:
         A list of the matches found. Each match is a dictionary with these
         keys: folder, filename, location, linetext
     """
-    fullname = str(Path(root_dir).joinpath(filename))
+
+    # If filename was passed as a string, convert to a path.
+    if isinstance(file, str):
+        file = Path(file)
+
+    #/// next, convert fullname to a Path object instead
+    fullname = str(folder.joinpath(file))
     _settings.bytes_searched += Path(fullname).stat().st_size
 
-    if Path(filename).suffix.lower() == ".ipynb":
+    if file.suffix.lower() == ".ipynb":
         matches = []
         # special case for searching Jupyter notebook files
         with open(fullname, "r", encoding="utf-8") as notebook_file:
@@ -202,8 +212,8 @@ def search_file(filename, searchfor, root_dir):
                     if searchfor.lower() in source_line.lower():
                         matches.append(
                             {
-                                "folder": root_dir,
-                                "filename": filename,
+                                "folder": str(folder),
+                                "filename": str(file),
                                 "location": "Cell " + str(cell_no),
                                 "linetext": source_line.strip(),
                             }
@@ -218,8 +228,8 @@ def search_file(filename, searchfor, root_dir):
             if searchfor.lower() in line.lower():
                 matches.append(
                     {
-                        "folder": root_dir,
-                        "filename": filename,
+                        "folder": str(folder),
+                        "filename": str(file),
                         "location": str(lineno),
                         "linetext": line,
                     }
@@ -268,8 +278,3 @@ class MatchPrinter:
             if len(toprint) > 67:
                 toprint = toprint[:64] + "..."
             click.echo(click.style(loc_str + toprint, fg="cyan"))
-
-
-# code for standalone execution
-if __name__ == "__main__":
-    print("__main__()")
