@@ -1,5 +1,7 @@
 """Command-line tool for Python source-code search.
 """
+from __future__ import annotations
+
 from glob import glob
 import json
 import os

@@ -13,7 +13,7 @@ Any file type(s) can be searched, and the default is to search ```.py``` source 
 
 ## Installation
 
-Pyfind requires Python 3.6 or above, and it uses the [Click](http://click.pocoo.org/5/) CLI library. I like to install it as editable, so that I can make changes and have them show up immediately, so I follow these steps to install:
+Pyfind requires Python 3.7 or above, and it uses the [Click](http://click.pocoo.org/5/) CLI library. I like to install it as editable, so that I can make changes and have them show up immediately, so I follow these steps to install:
 
 * Clone this repo
 * Install prerequisites with ```pip install -r requirements.txt```
@@ -37,7 +37,7 @@ The ```-s```/```--subfolders``` command line option controls whether to search s
 
 ### searching the Python standard library
 
-The ```*stdlib``` option for the starting folder is a shortcut for searching the Python standard library source code for the currently active Python interpreter. For example, here's a search for ```spam``` in the standard library of Python 3.6.8:
+The ```*stdlib``` option for the starting folder is a shortcut for searching the Python standard library source code for the currently active Python interpreter. For example, here's a search for ```spam``` in the standard library:
 
 ![*stdlib search](images/stdlib.png)
 
