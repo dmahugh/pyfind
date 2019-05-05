@@ -7,38 +7,43 @@ from pathlib import Path
 import site
 import sys
 
+from typing import Dict, List, Optional, Union
+
 import click
 
-CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
+# custom type definitions:
+Match = Dict[str, str]
+
+CONTEXT_SETTINGS: dict = dict(help_option_names=["-h", "--help"])
 
 
 class _settings:
     """Provides a namespace used for global settings. Used only for totals.
     """
 
-    folders_searched = 0
-    files_searched = 0
-    lines_searched = 0
-    bytes_searched = 0
+    folders_searched: int = 0
+    files_searched: int = 0
+    lines_searched: int = 0
+    bytes_searched: int = 0
 
 
 class MatchPrinter:
     """Prints matches as they're found.
     """
 
-    def __init__(self):
-        self.folder = ""
-        self.filename = ""
+    def __init__(self) -> None:
+        self.folder: str = ""
+        self.filename: str = ""
 
-    def display(self, match):
+    def display(self, match: Match) -> None:
         """Display a search hit.
 
         1st parameter = dictionary of folder, filename, location, linetext
         """
-        folder = match["folder"]
-        filename = match["filename"]
-        location = match["location"]
-        linetext = match["linetext"]
+        folder: str = match["folder"]
+        filename: str = match["filename"]
+        location: str = match["location"]
+        linetext: str = match["linetext"]
 
         if folder != self.folder:
             click.echo(click.style(f"  folder: {folder}", fg="bright_green"))
@@ -54,8 +59,8 @@ class MatchPrinter:
             self.filename = filename
 
         # print the matching line
-        loc_str = location.rjust(8) + ": "
-        toprint = linetext.strip()[:100]
+        loc_str: str = location.rjust(8) + ": "
+        toprint: str = linetext.strip()[:100]
         try:
             click.echo(click.style(loc_str + toprint, fg="cyan"))
         except UnicodeEncodeError:
@@ -84,7 +89,7 @@ class MatchPrinter:
     + "be delimited with /. Default: -ft=py/ipynb",
 )
 @click.version_option(version="1.1", prog_name="PyFind")
-def cli(searchfor, startdir, filetypes, subfolders):
+def cli(searchfor: str, startdir: str, filetypes: str, subfolders: bool) -> None:
     """\b
     _______________         searchfor: text to search for (required)
      |___|___|___|          startdir:  folder to search, or one of the options below
@@ -92,9 +97,9 @@ def cli(searchfor, startdir, filetypes, subfolders):
          |___|              *stdlib   = Python standard library
            |                *packages = installed packages in current environment
     """
-    # Note that the Click framework uses the above docstring for the help
-    # screen.
+    # Note that Click uses the above docstring for the help screen.
 
+    typelist: List[str]
     if filetypes:
         typelist = ["." + _.lower() for _ in filetypes.split("/")]
     else:
@@ -117,12 +122,18 @@ def cli(searchfor, startdir, filetypes, subfolders):
     )
 
 
-def get_matches(*, searchfor="", startdir=Path.cwd(), filetypes=None, subfolders=False):
+def get_matches(
+    *,
+    searchfor: str = "",
+    startdir: str = ".",
+    filetypes: List[str] = None,
+    subfolders: bool = False,
+) -> None:
     """Searches files and returns a list of matches.
 
     Args:
         searchfor: The string to search for (not case-sensitive).
-        startdir: Path to folder to be searched, or one of these special cases:
+        startdir: Folder to be searched, or one of these special cases:
                   *projects: search projects listed in projects.txt
                   *packages: search installed Python packages
                   *stdlib: search the Python standard library
@@ -144,6 +155,7 @@ def get_matches(*, searchfor="", startdir=Path.cwd(), filetypes=None, subfolders
         search_projects(searchfor, filetypes, output)
         return
 
+    search_root: Path
     if startdir.lower().startswith("*package"):
         # special case: search installed packages source code
         search_root = Path(site.getsitepackages()[-1])
@@ -154,16 +166,16 @@ def get_matches(*, searchfor="", startdir=Path.cwd(), filetypes=None, subfolders
         # An explicit search folder was specified on the command line.
         search_root = Path(startdir)
 
-    matchlist = []
+    matchlist: List[Match] = []
     for curdir, dirs, files in os.walk(search_root):
-        current_folder = Path(curdir)
+        current_folder: Path = Path(curdir)
         if current_folder.name == "__pycache__":
             continue  # Don't search __pycache__ folders.
         if not subfolders:
             del dirs[:]  # Don't search subfolders.
         _settings.folders_searched += 1
         for file in files:
-            file_to_search = Path(file)
+            file_to_search: Path = Path(file)
             if file_to_search.suffix.lower() in filetypes:
                 _settings.files_searched += 1
                 for match in search_file(file_to_search, searchfor, current_folder):
@@ -173,7 +185,7 @@ def get_matches(*, searchfor="", startdir=Path.cwd(), filetypes=None, subfolders
     print_summary(matchlist)
 
 
-def print_summary(hitlist):
+def print_summary(hitlist: List[Match]) -> None:
     """Prints a summary of search results.
 
     Args:
@@ -183,12 +195,13 @@ def print_summary(hitlist):
     Returns:
         None. Uses click.echo to print a summary to the console.
     """
-    folders = []
-    filenames = []
+    folders: List[str] = []
+    filenames: List[str] = []
 
+    match: Match
     for match in hitlist:
-        folder = match["folder"]
-        filename = match["filename"]
+        folder: str = match["folder"]
+        filename: str = match["filename"]
         if not folder in folders:
             folders.append(folder)
         if not filename in filenames:
@@ -201,7 +214,9 @@ def print_summary(hitlist):
     click.echo(click.style(summary.rjust(75), fg="green"), nl=True)
 
 
-def search_file(file, searchfor, folder=Path(".")):
+def search_file(
+    file: Union[Path, str], searchfor: str, folder: Optional[Union[Path, str]] = None
+) -> List[Match]:
     """Searches a file and returns all hits found.
 
     Args:
@@ -216,20 +231,29 @@ def search_file(file, searchfor, folder=Path(".")):
         keys: folder, filename, location, linetext
     """
 
+    # Convert file and folder to Path instances if needed.
     if isinstance(file, str):
-        # If filename was passed as a string, convert to a path.
         file = Path(file)
-    fullname = folder.joinpath(file)
+    if folder is None:
+        folder = Path(".")
+    if isinstance(folder, str):
+        folder = Path(folder)
+
+    fullname: Path = folder.joinpath(file)
 
     _settings.bytes_searched += fullname.stat().st_size
 
+    matches: List[Match] = []
+
     if file.suffix.lower() == ".ipynb":
-        matches = []
         # special case for searching Jupyter notebook files
         with fullname.open(errors="replace") as notebook_file:
-            notebook_data = json.loads(notebook_file.read())
+            notebook_data: dict = json.loads(notebook_file.read())
+        cell_no: int
+        cell: dict
         for cell_no, cell in enumerate(notebook_data["cells"]):
             if cell["cell_type"] == "code":
+                source_line: str
                 for source_line in cell["source"]:
                     if searchfor.lower() in source_line.lower():
                         matches.append(
@@ -243,8 +267,9 @@ def search_file(file, searchfor, folder=Path(".")):
         return matches
 
     # plain text search for all other file types
-    matches = []
     with fullname.open(errors="replace") as searchfile:
+        lineno: int
+        line: str
         for lineno, line in enumerate(searchfile, 1):
             _settings.lines_searched += 1
             if searchfor.lower() in line.lower():
@@ -259,7 +284,9 @@ def search_file(file, searchfor, folder=Path(".")):
     return matches
 
 
-def search_projects(search_for, file_types, match_printer):
+def search_projects(
+    search_for: str, file_types: List[str], match_printer: MatchPrinter
+):
     """Searches a list of project folders and displays matches found.
 
     Args:
@@ -271,23 +298,26 @@ def search_projects(search_for, file_types, match_printer):
     Returns:
         None. Matches are printed to the console.
     """
-    pyfind_folder = Path(__file__).resolve().parent
-    projects_file = Path.joinpath(pyfind_folder, "projects.txt")
+    pyfind_folder: Path = Path(__file__).resolve().parent
+    projects_file: Path = Path.joinpath(pyfind_folder, "projects.txt")
     if not projects_file.is_file():
         click.echo(click.style(f"FILE NOT FOUND: {projects_file}", fg="red"))
         return
-    matchlist = []
+    matchlist: List[Match] = []
+    line: str
     for line in projects_file.read_text().splitlines():
-        folder = Path(line.strip())
+        folder: Path = Path(line.strip())
         if not folder.is_dir():
             click.echo(click.style(f"FOLDER NOT FOUND: {folder}", fg="red"))
             continue
         _settings.folders_searched += 1
+        filename: str
         for filename in glob(str(folder.joinpath("*.*"))):
-            file_to_search = Path(filename)
+            file_to_search: Path = Path(filename)
             if file_to_search.suffix not in file_types:
                 continue
             _settings.files_searched += 1
+            match: Match
             for match in search_file(file_to_search, search_for, folder):
                 matchlist.append(match)
                 match_printer.display(match)
