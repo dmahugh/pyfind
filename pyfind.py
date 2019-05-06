@@ -161,6 +161,7 @@ def get_matches(
     if startdir.lower().startswith("*package"):
         # special case: search installed packages source code
         search_root = Path(site.getsitepackages()[-1])
+        subfolders = True
     elif startdir.lower().startswith("*stdlib"):
         # special case: search Python standard library source code
         search_root = Path(sys.exec_prefix).joinpath("Lib")
