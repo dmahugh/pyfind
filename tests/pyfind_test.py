@@ -3,10 +3,11 @@
 from pathlib import Path
 
 import pytest
+from click.testing import CliRunner
 
 import config
 from pyfind import highlight_match, Search, textfile_to_list
-from pyfind import Match, is_notebook, search_file
+from pyfind import cli, Match, is_notebook, search_file
 
 LONG_TEXT = (
     "START Lorem ipsum dolor sit amet, consectetuer adipiscing elit. "
@@ -16,6 +17,15 @@ LONG_TEXT = (
     "Pellentesque habitant morbi tristique senectus et netus et malesuada fames "
     "ac turpis egestas. Proin pharetra nonummy pede. Mauris et orci. END"
 )
+
+
+def test_cli_help() -> None:
+    """Test the --help option.
+    """
+    runner = CliRunner()
+    result = runner.invoke(cli, ["--help"])
+    assert result.exit_code == 0
+    assert result.output.startswith("Usage: cli <options> searchfor <startdir>")
 
 
 @pytest.mark.parametrize(
