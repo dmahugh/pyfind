@@ -1,75 +1,22 @@
-"""Command-line tool for Python source-code search.
+"""pyfind2 - the full version 2.0 of pyfind, with new architecture
+
+This will be swapped out with pyfind.py when it's fully functional.
 """
 from __future__ import annotations
 
-from glob import glob
 import json
 import os
 from pathlib import Path
+import shutil
 import site
 import sys
-
-from typing import Dict, List, Optional, Union
+from typing import List, Tuple, Union
 
 import click
 
-# custom type definitions:
-Match = Dict[str, str]
+import config
 
 CONTEXT_SETTINGS: dict = dict(help_option_names=["-h", "--help"])
-
-
-class _settings:
-    """Provides a namespace used for global settings. Used only for totals.
-    """
-
-    folders_searched: int = 0
-    files_searched: int = 0
-    lines_searched: int = 0
-    bytes_searched: int = 0
-
-
-class MatchPrinter:
-    """Prints matches as they're found.
-    """
-
-    def __init__(self) -> None:
-        self.folder: str = ""
-        self.filename: str = ""
-
-    def display(self, match: Match) -> None:
-        """Display a search hit.
-
-        1st parameter = dictionary of folder, filename, location, linetext
-        """
-        folder: str = match["folder"]
-        filename: str = match["filename"]
-        location: str = match["location"]
-        linetext: str = match["linetext"]
-
-        if folder != self.folder:
-            click.echo(click.style(f"  folder: {folder}", fg="bright_green"))
-            self.folder = folder
-            # handle special case of the same-named file being a search hit
-            # in two different folders, by resetting self.filename to an impossible
-            # value to force display of the filename below even if it hasn't
-            # changed since the previous hit ...
-            self.filename = " / "
-
-        if filename != self.filename:
-            click.echo(f"          {filename}")
-            self.filename = filename
-
-        # print the matching line
-        loc_str: str = location.rjust(8) + ": "
-        toprint: str = linetext.strip()[:100]
-        try:
-            click.echo(click.style(loc_str + toprint, fg="cyan"))
-        except UnicodeEncodeError:
-            toprint = str(linetext.encode("utf8"))
-            if len(toprint) > 67:
-                toprint = toprint[:64] + "..."
-            click.echo(click.style(loc_str + toprint, fg="cyan"))
 
 
 @click.argument("startdir", default="*projects", metavar="<startdir>")
@@ -105,152 +52,286 @@ def cli(searchfor: str, startdir: str, filetypes: str, subfolders: bool) -> None
     if filetypes:
         typelist = ["." + _.lower() for _ in filetypes.split("/")]
     else:
-        typelist = []
-
-    get_matches(
-        searchfor=searchfor,
-        startdir=startdir,
-        filetypes=typelist,
-        subfolders=subfolders,
-    )
-
-    click.echo(
-        "Searched: {0} folders, {1} files, {2} lines, {3} bytes".format(
-            _settings.folders_searched,
-            _settings.files_searched,
-            _settings.lines_searched,
-            _settings.bytes_searched,
-        )
-    )
-
-
-def get_matches(
-    *,
-    searchfor: str = "",
-    startdir: str = ".",
-    filetypes: List[str] = None,
-    subfolders: bool = False,
-) -> None:
-    """Searches files and returns a list of matches.
-
-    Args:
-        searchfor: The string to search for (not case-sensitive).
-        startdir: Folder to be searched, or one of these special cases:
-                  *projects: search projects listed in projects.txt
-                  *packages: search installed Python packages
-                  *stdlib: search the Python standard library
-        subfolders: Whether to search subfolders.
-        filetypes: A list of file types (extensions) to be search. Each entry
-                   must be lowercase and include the preceding period.
-
-    Returns:
-        None
-    """
-    if not searchfor:
-        return
-    if not filetypes:
-        filetypes = [".py", ".ipynb"]  # default if no filetypes provided
-
-    output = MatchPrinter()
+        typelist = [".py", ".ipynb"]
+    searcher = Search(search_for=searchfor, file_types=typelist)
 
     if startdir.lower().startswith("*project"):
-        search_projects(searchfor, filetypes, output)
+        # special case for *projects option
+        pyfind_folder: Path = Path(__file__).resolve().parent
+        projects_file: Path = Path.joinpath(pyfind_folder, "projects.txt")
+        if not projects_file.is_file():
+            click.echo(click.style(f"FILE NOT FOUND: {projects_file}", fg="red"))
+            return
+        for project_folder in textfile_to_list(projects_file):
+            searcher.search_folder(project_folder)
+        searcher.print_summary()
         return
 
     search_root: Path
     if startdir.lower().startswith("*package"):
-        # special case: search installed packages source code
+        # search installed packages source code
         search_root = Path(site.getsitepackages()[-1])
         subfolders = True
     elif startdir.lower().startswith("*stdlib"):
-        # special case: search Python standard library source code
+        # search Python standard library source code
         search_root = Path(sys.exec_prefix).joinpath("Lib")
     else:
         # An explicit search folder was specified on the command line.
         search_root = Path(startdir)
 
-    matchlist: List[Match] = []
-    for curdir, dirs, files in os.walk(search_root):
-        current_folder: Path = Path(curdir)
-        if current_folder.name == "__pycache__":
-            continue  # Don't search __pycache__ folders.
-        if not subfolders:
-            del dirs[:]  # Don't search subfolders.
-        _settings.folders_searched += 1
-        for file in files:
-            file_to_search: Path = Path(file)
-            if file_to_search.suffix.lower() in filetypes:
-                _settings.files_searched += 1
-                for match in search_file(file_to_search, searchfor, current_folder):
-                    matchlist.append(match)
-                    output.display(match)
-
-    print_summary(matchlist)
+    searcher.search_folder(search_root, subdirs=subfolders)
+    searcher.print_summary()
 
 
-def print_summary(hitlist: List[Match]) -> None:
-    """Prints a summary of search results.
+class Match:
+    """Stores a single match found in a search.
+    """
+
+    def __init__(self, file: Path, match: str, position: int, search_for: str) -> None:
+        """Constructor, initializes properties.
+
+        Args:
+            file: the file that was searched, as a pathlib.Path
+            match: the line of text where a match was found
+            position: the position of the match within the file. Either a line
+                number, or a cell number (for notebook files).
+            search_for: the search text that was found.
+        Returns:
+            None
+        """
+        self.file = file
+        self.match = match
+        self.position = position
+        self.search_for = search_for
+
+    def print_match(self) -> None:
+        """Prints the match to the console.
+        """
+        prefix = f"{'cell' if is_notebook(self.file) else 'line'} {self.position}: ".rjust(
+            config.PREFIX_LENGTH
+        )
+
+        console_width, _ = shutil.get_terminal_size((80, 20))
+        # chars = the maximum number of characters of self.match to be printed
+        chars: int = console_width - len(prefix) - 1
+        # to color-highlight the matched text, break the line into sections
+        sections: List[Tuple] = highlight_match(self.match, self.search_for, chars)
+
+        # print the prefix, with nl=False to print the sections on the same line
+        click.echo(click.style(prefix, fg=config.COLOR_MATCH_LINE), nl=False)
+        # all but the final section have nl=False to print on same line
+        for text, color in sections[:-1]:
+            click.echo(click.style(text, fg=color), nl=False)
+        # final section does not include nl=False
+        click.echo(click.style(sections[-1][0], fg=sections[-1][1]))
+
+
+class Search:
+    """Master search instance. Typical use is to instantiate an instance and
+    set what to search for and which file types to search, then call the
+    search_folder method one or more times to do the searches, then call the
+    print_summary method to print a summary.
+    """
+
+    def __init__(self, search_for: str, file_types: List[str]) -> None:
+        """Constructor
+
+        Args:
+            search_for: text to be searched for
+            file_types: list of file types to search, with preceding period
+                on each (e.g., [".py", ".ipynb"])
+
+        Returns:
+            None
+        """
+        self.search_for: str = search_for
+        self.file_types: List[str] = file_types
+
+        self.searched_folders: int = 0
+        self.searched_files: int = 0
+        self.searched_lines: int = 0
+        self.searched_bytes: int = 0
+
+        self.last_folder_printed = ""
+        self.last_file_printed = ""
+
+    def print_summary(self):
+        """Prints the search totals to the console.
+        """
+        prefix = "Searched: ".rjust(config.PREFIX_LENGTH)
+        click.echo(
+            click.style(
+                (
+                    f"{prefix}{self.searched_folders} folders, "
+                    f"{self.searched_files} files, "
+                    f"{self.searched_lines} lines, "
+                    f"{self.searched_bytes} bytes"
+                ),
+                fg=config.COLOR_SUMMARY,
+            )
+        )
+
+    def print_match(self, match: Match) -> None:
+        """Prints a match to console.
+        """
+        if self.last_folder_printed != match.file.parent:
+            prefix = "folder: ".rjust(config.PREFIX_LENGTH)
+            click.echo(
+                click.style(f"{prefix}{match.file.parent}", fg=config.COLOR_FOLDER)
+            )
+            self.last_folder_printed = match.file.parent
+            self.last_file_printed = ""
+
+        if self.last_file_printed != match.file.name:
+            prefix = " " * config.PREFIX_LENGTH
+            click.echo(
+                click.style(f"{prefix}{match.file.name}", fg=config.COLOR_FILENAME)
+            )
+            self.last_file_printed = match.file.name
+
+        match.print_match()
+
+    def reset_totals(self) -> None:
+        """Resets search totals to start a new set of searches.
+        """
+        self.searched_folders = 0
+        self.searched_files = 0
+        self.searched_lines = 0
+        self.searched_bytes = 0
+
+    def search_folder(
+        self, folder: str, subdirs: bool = False, print_matches: bool = True
+    ) -> List[Match]:
+        """Searches a folder's files.
+
+        Args:
+            folder: name of the folder to be searched
+            subdirs: whether to recursively search all subfolders
+            print_matches: whether to print matches to the console
+
+        Returns:
+            A list of the matches found, as Match objects
+        """
+        matchlist = []
+        for curdir, dirs, files in os.walk(folder):
+            current_folder: Path = Path(curdir)
+            if (
+                current_folder.name in config.SKIPPED_FOLDERS
+                or current_folder.name.endswith(".egg-info")
+            ):
+                continue
+            if not subdirs:
+                del dirs[:]  # Don't search subfolders.
+            self.searched_folders += 1
+            for file in files:
+                #file_to_search: Path = Path(file)
+                file_to_search: Path = Path(curdir).joinpath(file)
+                if file_to_search.suffix.lower() in self.file_types:
+                    self.searched_files += 1
+                    matches, lines_count, bytes_count = search_file(
+                        file_to_search, self.search_for
+                    )
+                    self.searched_lines += lines_count
+                    self.searched_bytes += bytes_count
+                    for match in matches:
+                        matchlist.append(match)
+                        if print_matches:
+                            self.print_match(match)
+        return matchlist
+
+
+def highlight_match(match_line: str, match_text: str, max_chars: int) -> List[Tuple]:
+    """Converts a match to a set of color-highlighted strings to be printed to
+    the console.
 
     Args:
-        hitlist: A list of the matches found. Each match is a dictionary with
-                 these keys: folder, filename, location, linetext
+        match_line: the line of text where a match was found
+        match_text: the text to be highlighted (i.e., what was searched for)
+        max_chars: the maximum total number of characters to be returned
 
     Returns:
-        None. Uses click.echo to print a summary to the console.
+        A list of (text, color) tuples for printing with click.echo/click.style.
+
+    Note that we only highlight the first match if there are multiple matches
+    in a single line.
     """
-    folders: List[str] = []
-    filenames: List[str] = []
 
-    match: Match
-    for match in hitlist:
-        folder: str = match["folder"]
-        filename: str = match["filename"]
-        if not folder in folders:
-            folders.append(folder)
-        if not filename in filenames:
-            filenames.append(filename)
+    # toprint = the portion of the line that will be printed to the console
+    toprint: str
+    if match_text.lower() in match_line[:max_chars].lower():
+        # The match is in the first max_chars of the line.
+        toprint = match_line[:max_chars]
+    elif match_text.lower() in match_line[-max_chars:].lower():
+        # The match is in the last max_chars of the line.
+        toprint = match_line[-max_chars:]
+    else:
+        # This is a very long line relative to the console, and we need to find
+        # a max_chars long substring in the middle of it that contains the
+        # matched text. We'll try to position the match in the center of this
+        # substring.
+        # match_start = starting position of the match
+        match_start: int = match_line.lower().find(match_text.lower())
+        # center = the position of the center of the substring
+        center: int = match_start + len(match_text) // 2
+        # substring_start = the start of the extracted substring
+        substring_start: int = center - max_chars // 2
+        toprint = match_line[substring_start : substring_start + max_chars]
 
-    summary = (
-        f"{len(hitlist)} matches / {len(filenames)} files / {len(folders)} folders"
+    # Now we break toprint into colored sections. The matched search text will
+    # be config.COLOR_MATCH_TEXT, the rest of the line is config.COLOR_MATCH_LINE.
+    sections: List[Tuple] = []
+    match_position: int = toprint.lower().find(match_text.lower())
+    if match_position > 0:
+        sections.append((toprint[:match_position], config.COLOR_MATCH_LINE))
+    sections.append(
+        (
+            toprint[match_position : match_position + len(match_text)],
+            config.COLOR_MATCH_TEXT,
+        )
     )
+    if match_position < len(toprint) - len(match_text):
+        sections.append(
+            (toprint[match_position + len(match_text) :], config.COLOR_MATCH_LINE)
+        )
+    return sections
 
-    click.echo(click.style(summary.rjust(75), fg="green"), nl=True)
 
-
-def search_file(
-    file: Union[Path, str], searchfor: str, folder: Optional[Union[Path, str]] = None
-) -> List[Match]:
-    """Searches a file and returns all hits found.
+def is_notebook(file: Union[Path, str]) -> bool:
+    """Determines whether a file is a notebook file or not.
 
     Args:
-        file: File to be searched. May be either a pathlib.Path object, or a
-              base filename (no folder/path) passed as a string.
-        searchfor: The string to search for.
-        folder: The folder where the file is located, as a pathlib.Path.
-            The folder argument is optional; defaults to Path(".") if omitted.
+        file: the file, as either a pathlib.Path object or a filename string.
 
     Returns:
-        A list of the matches found. Each match is a dictionary with these
-        keys: folder, filename, location, linetext
+        True if notebook file, else False.
     """
-
-    # Convert file and folder to Path instances if needed.
     if isinstance(file, str):
-        file = Path(file)
-    if folder is None:
-        folder = Path(".")
-    if isinstance(folder, str):
-        folder = Path(folder)
+        return Path(file).suffix.lower() == ".ipynb"
+    return file.suffix.lower() == ".ipynb"
 
-    fullname: Path = folder.joinpath(file)
 
-    _settings.bytes_searched += fullname.stat().st_size
+def search_file(file: str, search_for: str) -> Tuple[List[Match], int, int]:
+    """Searches a file for a specified string.
+
+    Args:
+        file: name of the file to be searched (str)
+        search_for: the text to search for
+
+    Returns:
+        A tuple containing these three values:
+        - a list of Match objects
+        - number of lines searched
+        - number of bytes searched (i.e., file size in bytes)
+    """
+    file_path: Path = Path(file)
 
     matches: List[Match] = []
+    line_count: int = 0
+    byte_count: int = file_path.stat().st_size
 
-    if file.suffix.lower() == ".ipynb":
+    if is_notebook(file):
         # special case for searching Jupyter notebook files
-        with fullname.open(errors="replace") as notebook_file:
+        with file_path.open(errors="replace") as notebook_file:
             notebook_data: dict = json.loads(notebook_file.read())
         cell_no: int
         cell: dict
@@ -258,71 +339,36 @@ def search_file(
             if cell["cell_type"] == "code":
                 source_line: str
                 for source_line in cell["source"]:
-                    if searchfor.lower() in source_line.lower():
+                    line_count += 1
+                    if search_for.lower() in source_line.lower():
                         matches.append(
-                            {
-                                "folder": str(folder),
-                                "filename": str(file),
-                                "location": "Cell " + str(cell_no),
-                                "linetext": source_line.strip(),
-                            }
+                            Match(file_path, source_line.strip(), cell_no, search_for)
                         )
-        return matches
+        return (matches, line_count, byte_count)
 
     # plain text search for all other file types
-    with fullname.open(errors="replace") as searchfile:
+    with file_path.open(errors="replace") as searchfile:
         lineno: int
         line: str
         for lineno, line in enumerate(searchfile, 1):
-            _settings.lines_searched += 1
-            if searchfor.lower() in line.lower():
-                matches.append(
-                    {
-                        "folder": str(folder),
-                        "filename": str(file),
-                        "location": str(lineno),
-                        "linetext": line,
-                    }
-                )
-    return matches
+            line_count += 1
+            if search_for.lower() in line.lower():
+                matches.append(Match(file_path, line.strip(), lineno, search_for))
+    return (matches, line_count, byte_count)
 
 
-def search_projects(
-    search_for: str, file_types: List[str], match_printer: MatchPrinter
-):
-    """Searches a list of project folders and displays matches found.
+def textfile_to_list(filename: str) -> List[str]:
+    """Reads a text file and returns a list of its non-empty lines.
 
     Args:
-        search_for: The text to search for.
-        file_types: The list of file types to search (e.g., [".py", ".ipynb"]).
-        match_printer: A MatchPrinter instance to use for printing the
-            found matches to the console.
+        filename: name of the text file
 
     Returns:
-        None. Matches are printed to the console.
+        list of the non-empty lines.
     """
-    pyfind_folder: Path = Path(__file__).resolve().parent
-    projects_file: Path = Path.joinpath(pyfind_folder, "projects.txt")
-    if not projects_file.is_file():
-        click.echo(click.style(f"FILE NOT FOUND: {projects_file}", fg="red"))
-        return
-    matchlist: List[Match] = []
-    line: str
-    for line in projects_file.read_text().splitlines():
-        folder: Path = Path(line.strip())
-        if not folder.is_dir():
-            click.echo(click.style(f"FOLDER NOT FOUND: {folder}", fg="red"))
-            continue
-        _settings.folders_searched += 1
-        filename: str
-        for filename in glob(str(folder.joinpath("*.*"))):
-            file_to_search: Path = Path(filename)
-            if file_to_search.suffix not in file_types:
-                continue
-            _settings.files_searched += 1
-            match: Match
-            for match in search_file(file_to_search, search_for, folder):
-                matchlist.append(match)
-                match_printer.display(match)
-
-    print_summary(matchlist)
+    returned_list = []
+    with Path(filename).open() as fhandle:
+        for line in fhandle:
+            if line.strip():
+                returned_list.append(line.strip())
+    return returned_list
