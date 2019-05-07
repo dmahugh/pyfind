@@ -1,4 +1,4 @@
 Sample text file for use in pyfind unit tests.
-
+import something
 Should find "whatever" on lines 3 and 4.
 whatever

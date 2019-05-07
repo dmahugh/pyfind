@@ -1,138 +1,177 @@
 """pytest unit tests for pyfind
-
-Very simple, just using source files for test data, etc.
 """
 from pathlib import Path
 
 import pytest
 
-from pyfind import search_file
+import config
+from pyfind import highlight_match, Search, textfile_to_list
+from pyfind import Match, is_notebook, search_file
+
+LONG_TEXT = (
+    "START Lorem ipsum dolor sit amet, consectetuer adipiscing elit. "
+    "Maecenas porttitor congue massa. Fusce posuere, magna sed pulvinar "
+    "ultricies, purus lectus malesuada libero, sit amet commodo magna eros "
+    "quis urna. Nunc viverra imperdiet enim. Fusce est. Vivamus a tellus. "
+    "Pellentesque habitant morbi tristique senectus et netus et malesuada fames "
+    "ac turpis egestas. Proin pharetra nonummy pede. Mauris et orci. END"
+)
 
 
-def test_search_file_path1():
-    """function: search_file()
-    Tests passing the searched filename a pathlib.Path object.
+@pytest.mark.parametrize(
+    "searchfor,maxchars,expected",
+    [
+        (
+            "START",
+            11,
+            [("START", config.COLOR_MATCH_TEXT), (" Lorem", config.COLOR_MATCH_LINE)],
+        ),
+        (
+            "Lorem",
+            23,
+            [
+                ("START ", config.COLOR_MATCH_LINE),
+                ("Lorem", config.COLOR_MATCH_TEXT),
+                (" ipsum dolor", config.COLOR_MATCH_LINE),
+            ],
+        ),
+        (
+            "viverra",
+            20,
+            [
+                (". Nunc ", config.COLOR_MATCH_LINE),
+                ("viverra", config.COLOR_MATCH_TEXT),
+                (" imper", config.COLOR_MATCH_LINE),
+            ],
+        ),
+        (
+            "orci",
+            19,
+            [
+                ("Mauris et ", config.COLOR_MATCH_LINE),
+                ("orci", config.COLOR_MATCH_TEXT),
+                (". END", config.COLOR_MATCH_LINE),
+            ],
+        ),
+        (
+            "END",
+            19,
+            [
+                ("Mauris et orci. ", config.COLOR_MATCH_LINE),
+                ("END", config.COLOR_MATCH_TEXT),
+            ],
+        ),
+    ],
+)
+def test_highlight_match(searchfor, maxchars, expected):
+    """function: highlight_match()
     """
-
-    search_for = "pathlib"
-    search_in = Path("testdata.py")
-    search_results = search_file(search_in,
-                                 search_for,
-                                 Path("."))
-
-    assert len(search_results) == 1 # one match
-    assert search_results[0]["folder"] == "."
-    assert search_results[0]["filename"] == search_in.name
-    assert search_results[0]["location"] == "3"
-    assert search_for.lower() in search_results[0]["linetext"].lower()
+    assert highlight_match(LONG_TEXT, searchfor, maxchars) == expected
 
 
-def test_search_file_path2():
-    """function: search_file()
-    Tests passing the searched filename a pathlib.Path object.
+@pytest.mark.parametrize(
+    "filename,expected",
+    [
+        ("sample.ipynb", True),
+        ("sample.py", False),
+        (Path("sample.ipynb"), True),
+        (Path("sample.py"), False),
+    ],
+)
+def test_is_notebook(filename, expected):
+    """function: is_notebook()
     """
-
-    search_for = "Whatever"
-    search_in = Path("testdata.txt")
-    search_results = search_file(search_in,
-                                 search_for,
-                                 Path("."))
-
-    assert len(search_results) == 2
-    for search_result in search_results:
-        assert search_result["folder"] == "."
-        assert search_result["filename"] == search_in.name
-        assert search_result["location"] in ["3", "4"]
-        assert search_for.lower() in search_result["linetext"].lower()
+    assert is_notebook(filename) == expected
 
 
-def test_search_file_path3():
-    """function: search_file()
-    Tests calling search_file without a folder argument.
+def test_print_match(capsys):
+    """method: Match.print_match()
     """
-
-    search_for = "Whatever"
-    search_in = Path("testdata.txt")
-    search_results = search_file(search_in,
-                                 search_for)
-
-    assert len(search_results) == 2
-    for search_result in search_results:
-        assert search_result["folder"] == "."
-        assert search_result["filename"] == search_in.name
-        assert search_result["location"] in ["3", "4"]
-        assert search_for.lower() in search_result["linetext"].lower()
+    line_of_text = 'Should find "whatever" on lines 3 and 4.'
+    match = Match(
+        file=Path("testdata.txt"), match=line_of_text, position=3, search_for="Whatever"
+    )
+    match.print_match()
+    out, err = capsys.readouterr()
+    assert out == f"    line 3: {line_of_text}\n"
+    assert err == ""
 
 
-def test_search_file_str1():
-    """function: search_file()
-    Tests passing the searched filename a string.
+def test_print_summary(capsys):
+    """method: Search.print_summary()
     """
-
-    search_for = "pathlib"
-    search_in = "testdata.py"
-    search_results = search_file(search_in,
-                                 search_for,
-                                 Path("."))
-
-    assert len(search_results) == 1 # one match
-    assert search_results[0]["folder"] == "."
-    assert search_results[0]["filename"] == search_in
-    assert search_results[0]["location"] == "3"
-    assert search_for.lower() in search_results[0]["linetext"].lower()
+    searcher = Search("import", [".txt", ".ipynb"])
+    searcher.search_folder(".", print_matches=False)
+    searcher.print_summary()
+    out, err = capsys.readouterr()
+    assert out == f"  Searched: 1 folders, 2 files, 5 lines, 821 bytes\n"
+    assert err == ""
 
 
-def test_search_file_str2():
+@pytest.mark.parametrize(
+    "filename, search_for, match, hits, lines, bytes",
+    [
+        (
+            "testdata.py",
+            "pathlib",
+            Match(Path("testdata.py"), "import pathlib", 3, "pathlib"),
+            1,
+            3,
+            57,
+        ),
+        (
+            "testdata.txt",
+            "Whatever",
+            Match(
+                Path("testdata.txt"),
+                'Should find "whatever" on lines 3 and 4.',
+                3,
+                "Whatever",
+            ),
+            2,
+            4,
+            118,
+        ),
+        (
+            "testdata.ipynb",
+            "requests",
+            Match(Path("testdata.ipynb"), "import requests", 1, "requests"),
+            1,
+            1,
+            703,
+        ),
+    ],
+)
+def test_search_file(filename, search_for, match, hits, lines, bytes):
     """function: search_file()
-    Tests passing the searched filename a string.
     """
+    search_results = search_file(filename, search_for)
+    assert search_results[0][0].file == match.file
+    assert search_results[0][0].match == match.match
+    assert search_results[0][0].position == match.position
+    assert search_results[0][0].search_for == match.search_for
+    assert len(search_results[0]) == hits
+    assert search_results[1] == lines
+    assert search_results[2] == bytes
 
-    search_for = "Whatever"
-    search_in = "testdata.txt"
-    search_results = search_file(search_in,
-                                 search_for,
-                                 Path("."))
 
-    assert len(search_results) == 2
-    for search_result in search_results:
-        assert search_result["folder"] == "."
-        assert search_result["filename"] == search_in
-        assert search_result["location"] in ["3", "4"]
-        assert search_for.lower() in search_result["linetext"].lower()
-
-def test_search_file_str3():
-    """function: search_file()
-    Tests calling search_file without a folder argument.
+def test_search_folder():
+    """method: Search.search_folder()
     """
+    searcher = Search("import", [".txt", ".ipynb"])
+    matches = searcher.search_folder(".", print_matches=False)
+    assert len(matches) == 2
+    assert "testdata.ipynb" in [str(match.file) for match in matches]
+    assert "testdata.txt" in [str(match.file) for match in matches]
 
-    search_for = "Whatever"
-    search_in = "testdata.txt"
-    search_results = search_file(search_in,
-                                 search_for)
 
-    assert len(search_results) == 2
-    for search_result in search_results:
-        assert search_result["folder"] == "."
-        assert search_result["filename"] == search_in
-        assert search_result["location"] in ["3", "4"]
-        assert search_for.lower() in search_result["linetext"].lower()
-
-def test_search_file_notebook():
-    """function: search_file()
-    Tests searching a notebook (.ipynb) file.
+def test_textfile_to_list():
+    """function: textfile_to_list()
     """
-
-    search_for = "requests"
-    search_in = Path("testdata.ipynb")
-    search_results = search_file(search_in,
-                                 search_for,
-                                 Path("."))
-
-    assert len(search_results) == 1 # one match
-    assert search_results[0]["folder"] == "."
-    assert search_results[0]["filename"] == search_in.name
-    assert search_results[0]["location"] == "Cell 1"
-    assert search_for.lower() in search_results[0]["linetext"].lower()
+    testdata = textfile_to_list("testdata.txt")
+    assert len(testdata) == 4
+    assert testdata[0] == "Sample text file for use in pyfind unit tests."
+    assert testdata[3] == "whatever"
 
 
 if __name__ == "__main__":
