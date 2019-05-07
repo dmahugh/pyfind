@@ -1,6 +1,4 @@
-"""pyfind2 - the full version 2.0 of pyfind, with new architecture
-
-This will be swapped out with pyfind.py when it's fully functional.
+"""pyfind - command line search utility
 """
 from __future__ import annotations
 
@@ -17,6 +15,8 @@ import click
 import config
 
 CONTEXT_SETTINGS: dict = dict(help_option_names=["-h", "--help"])
+
+# This comment is used by tests. DO NOT REMOVE
 
 
 @click.argument("startdir", default="*projects", metavar="<startdir>")
@@ -63,7 +63,7 @@ def cli(searchfor: str, startdir: str, filetypes: str, subfolders: bool) -> None
             click.echo(click.style(f"FILE NOT FOUND: {projects_file}", fg="red"))
             return
         for project_folder in textfile_to_list(projects_file):
-            searcher.search_folder(project_folder)
+            searcher.search_folder(project_folder, subdirs=subfolders)
         searcher.print_summary()
         return
 
@@ -71,7 +71,7 @@ def cli(searchfor: str, startdir: str, filetypes: str, subfolders: bool) -> None
     if startdir.lower().startswith("*package"):
         # search installed packages source code
         search_root = Path(site.getsitepackages()[-1])
-        subfolders = True
+        subfolders = True # force subfolder search for *packages option
     elif startdir.lower().startswith("*stdlib"):
         # search Python standard library source code
         search_root = Path(sys.exec_prefix).joinpath("Lib")

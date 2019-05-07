@@ -19,6 +19,16 @@ LONG_TEXT = (
 )
 
 
+def test_cli() -> None:
+    """Test searching current folder.
+    """
+    runner = CliRunner()
+    result = runner.invoke(cli, ["requests", "."])
+    assert result.exit_code == 0
+    assert "testdata.ipynb" in result.output
+    assert "cell 1: import requests" in result.output
+
+
 def test_cli_help() -> None:
     """Test the --help option.
     """
@@ -26,6 +36,56 @@ def test_cli_help() -> None:
     result = runner.invoke(cli, ["--help"])
     assert result.exit_code == 0
     assert result.output.startswith("Usage: cli <options> searchfor <startdir>")
+
+
+def test_cli_packages() -> None:
+    """Test the *packages option.
+    """
+    runner = CliRunner()
+    result = runner.invoke(cli, ["click.style('Some things'", "*packages"])
+    assert result.exit_code == 0
+    assert "site-packages\\click" in result.output
+    assert "termui.py" in result.output
+
+
+def test_cli_projects() -> None:
+    """Test the *projects option.
+    """
+    runner = CliRunner()
+    result = runner.invoke(cli, ["This comment is used by tests."])
+    assert result.exit_code == 0
+    assert "pyfind.py" in result.output
+    assert "DO NOT REMOVE" in result.output
+
+
+def test_cli_stdlib() -> None:
+    """Test the *stdlib option.
+    """
+    runner = CliRunner()
+    result = runner.invoke(cli, ["spam", "*stdlib"])
+    assert result.exit_code == 0
+    assert "hashlib.py" in result.output
+    assert "Nobody inspects the spammish repetition" in result.output
+
+
+def test_cli_txt() -> None:
+    """Test searching .txt files.
+    """
+    runner = CliRunner()
+    result = runner.invoke(cli, ["whatever", ".", "-ft=txt"])
+    assert result.exit_code == 0
+    assert "line 3: Should find" in result.output
+    assert result.output.count("line 3:") == 1
+
+
+def test_cli_txt_subfolder() -> None:
+    """Test searching .txt files.
+    """
+    runner = CliRunner()
+    result = runner.invoke(cli, ["whatever", ".", "-ft=txt", "-s"])
+    assert result.exit_code == 0
+    assert "line 3: Should find" in result.output
+    assert result.output.count("line 3:") == 2
 
 
 @pytest.mark.parametrize(
