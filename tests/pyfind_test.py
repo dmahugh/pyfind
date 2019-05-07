@@ -18,76 +18,12 @@ LONG_TEXT = (
     "ac turpis egestas. Proin pharetra nonummy pede. Mauris et orci. END"
 )
 
+#-------------------------------------------------------------------------------
+# The following are unit tests that test a single function or method.
+# To only run these tests: pytest -m unit_test
+#-------------------------------------------------------------------------------
 
-def test_cli() -> None:
-    """Test searching current folder.
-    """
-    runner = CliRunner()
-    result = runner.invoke(cli, ["requests", "."])
-    assert result.exit_code == 0
-    assert "testdata.ipynb" in result.output
-    assert "cell 1: import requests" in result.output
-
-
-def test_cli_help() -> None:
-    """Test the --help option.
-    """
-    runner = CliRunner()
-    result = runner.invoke(cli, ["--help"])
-    assert result.exit_code == 0
-    assert result.output.startswith("Usage: cli <options> searchfor <startdir>")
-
-
-def test_cli_packages() -> None:
-    """Test the *packages option.
-    """
-    runner = CliRunner()
-    result = runner.invoke(cli, ["click.style('Some things'", "*packages"])
-    assert result.exit_code == 0
-    assert "site-packages\\click" in result.output
-    assert "termui.py" in result.output
-
-
-def test_cli_projects() -> None:
-    """Test the *projects option.
-    """
-    runner = CliRunner()
-    result = runner.invoke(cli, ["This comment is used by tests."])
-    assert result.exit_code == 0
-    assert "pyfind.py" in result.output
-    assert "DO NOT REMOVE" in result.output
-
-
-def test_cli_stdlib() -> None:
-    """Test the *stdlib option.
-    """
-    runner = CliRunner()
-    result = runner.invoke(cli, ["spam", "*stdlib"])
-    assert result.exit_code == 0
-    assert "hashlib.py" in result.output
-    assert "Nobody inspects the spammish repetition" in result.output
-
-
-def test_cli_txt() -> None:
-    """Test searching .txt files.
-    """
-    runner = CliRunner()
-    result = runner.invoke(cli, ["whatever", ".", "-ft=txt"])
-    assert result.exit_code == 0
-    assert "line 3: Should find" in result.output
-    assert result.output.count("line 3:") == 1
-
-
-def test_cli_txt_subfolder() -> None:
-    """Test searching .txt files.
-    """
-    runner = CliRunner()
-    result = runner.invoke(cli, ["whatever", ".", "-ft=txt", "-s"])
-    assert result.exit_code == 0
-    assert "line 3: Should find" in result.output
-    assert result.output.count("line 3:") == 2
-
-
+@pytest.mark.unit_test
 @pytest.mark.parametrize(
     "searchfor,maxchars,expected",
     [
@@ -138,7 +74,7 @@ def test_highlight_match(searchfor, maxchars, expected):
     """
     assert highlight_match(LONG_TEXT, searchfor, maxchars) == expected
 
-
+@pytest.mark.unit_test
 @pytest.mark.parametrize(
     "filename,expected",
     [
@@ -153,7 +89,7 @@ def test_is_notebook(filename, expected):
     """
     assert is_notebook(filename) == expected
 
-
+@pytest.mark.unit_test
 def test_print_match(capsys):
     """method: Match.print_match()
     """
@@ -166,7 +102,7 @@ def test_print_match(capsys):
     assert out == f"    line 3: {line_of_text}\n"
     assert err == ""
 
-
+@pytest.mark.unit_test
 def test_print_summary(capsys):
     """method: Search.print_summary()
     """
@@ -177,7 +113,7 @@ def test_print_summary(capsys):
     assert out == f"  Searched: 1 folders, 2 files, 5 lines, 821 bytes\n"
     assert err == ""
 
-
+@pytest.mark.unit_test
 @pytest.mark.parametrize(
     "filename, search_for, match, hits, lines, bytes",
     [
@@ -224,7 +160,7 @@ def test_search_file(filename, search_for, match, hits, lines, bytes):
     assert search_results[1] == lines
     assert search_results[2] == bytes
 
-
+@pytest.mark.unit_test
 def test_search_folder():
     """method: Search.search_folder()
     """
@@ -234,7 +170,7 @@ def test_search_folder():
     assert "testdata.ipynb" in [str(match.file) for match in matches]
     assert "testdata.txt" in [str(match.file) for match in matches]
 
-
+@pytest.mark.unit_test
 def test_textfile_to_list():
     """function: textfile_to_list()
     """
@@ -242,6 +178,85 @@ def test_textfile_to_list():
     assert len(testdata) == 4
     assert testdata[0] == "Sample text file for use in pyfind unit tests."
     assert testdata[3] == "whatever"
+
+#-------------------------------------------------------------------------------
+# The following are integration tests that capture and verify the cli output.
+# To only run these tests: pytest -m cli
+#-------------------------------------------------------------------------------
+
+@pytest.mark.cli
+def test_cli_help() -> None:
+    """Test the --help option.
+    """
+    runner = CliRunner()
+    result = runner.invoke(cli, ["--help"])
+    assert result.exit_code == 0
+    assert result.output.startswith("Usage: cli <options> searchfor <startdir>")
+
+
+@pytest.mark.cli
+def test_cli() -> None:
+    """Test searching current folder.
+    """
+    runner = CliRunner()
+    result = runner.invoke(cli, ["requests", "."])
+    assert result.exit_code == 0
+    assert "testdata.ipynb" in result.output
+    assert "cell 1: import requests" in result.output
+
+
+@pytest.mark.cli
+def test_cli_txt() -> None:
+    """Test searching .txt files.
+    """
+    runner = CliRunner()
+    result = runner.invoke(cli, ["whatever", ".", "-ft=txt"])
+    assert result.exit_code == 0
+    assert "line 3: Should find" in result.output
+    assert result.output.count("line 3:") == 1
+
+
+@pytest.mark.cli
+def test_cli_txt_subfolder() -> None:
+    """Test searching .txt files.
+    """
+    runner = CliRunner()
+    result = runner.invoke(cli, ["whatever", ".", "-ft=txt", "-s"])
+    assert result.exit_code == 0
+    assert "line 3: Should find" in result.output
+    assert result.output.count("line 3:") == 2
+
+@pytest.mark.cli
+def test_cli_stdlib() -> None:
+    """Test the *stdlib option.
+    """
+    runner = CliRunner()
+    result = runner.invoke(cli, ["spam", "*stdlib"])
+    assert result.exit_code == 0
+    assert "hashlib.py" in result.output
+    assert "Nobody inspects the spammish repetition" in result.output
+
+
+@pytest.mark.cli
+def test_cli_projects() -> None:
+    """Test the *projects option.
+    """
+    runner = CliRunner()
+    result = runner.invoke(cli, ["This comment is used by tests."])
+    assert result.exit_code == 0
+    assert "pyfind.py" in result.output
+    assert "DO NOT REMOVE" in result.output
+
+
+@pytest.mark.cli
+def test_cli_packages() -> None:
+    """Test the *packages option.
+    """
+    runner = CliRunner()
+    result = runner.invoke(cli, ["click.style('Some things'", "*packages"])
+    assert result.exit_code == 0
+    assert "site-packages\\click" in result.output
+    assert "termui.py" in result.output
 
 
 if __name__ == "__main__":
