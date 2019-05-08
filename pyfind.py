@@ -232,14 +232,13 @@ class Search:
             ):
                 continue
 
-            folder_full_line = pad_string(
-                f"\r{str(current_folder)}\r", self.console_width
-            )
+            folder_full_line = pad_string(str(current_folder), self.console_width)
             click.echo(
-                click.style(folder_full_line, fg=config.COLOR_SEARCHED_FOLDERS),
+                "\r"
+                + click.style(folder_full_line, fg=config.COLOR_SEARCHED_FOLDERS)
+                + "\r",
                 nl=False,
             )
-
             if not subdirs:
                 del dirs[:]  # Don't search subfolders.
             self.searched_folders += 1
