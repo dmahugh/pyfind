@@ -7,7 +7,7 @@ from click.testing import CliRunner
 
 import config
 from pyfind import highlight_match, Search, textfile_to_list
-from pyfind import cli, Match, is_notebook, search_file
+from pyfind import cli, Match, is_notebook, search_file, pad_string
 
 LONG_TEXT = (
     "START Lorem ipsum dolor sit amet, consectetuer adipiscing elit. "
@@ -22,6 +22,33 @@ LONG_TEXT = (
 # The following are unit tests that test a single function or method.
 # To only run these tests: pytest -m unit_test
 #-------------------------------------------------------------------------------
+
+@pytest.mark.unit_test
+@pytest.mark.parametrize(
+    "string, length, expected",
+    [
+        (
+            "abcdef",
+            10,
+            "abcdef    ",
+        ),
+        (
+            "abcdef",
+            6,
+            "abcdef",
+        ),
+        (
+            "abcdef",
+            4,
+            "abcd",
+        ),
+    ],
+)
+def test_pad_string(string, length, expected):
+    """function: pad_string()
+    """
+    assert pad_string(string, length) == expected
+
 
 @pytest.mark.unit_test
 @pytest.mark.parametrize(
@@ -99,7 +126,7 @@ def test_print_match(capsys):
     )
     match.print_match()
     out, err = capsys.readouterr()
-    assert out == f"    line 3: {line_of_text}\n"
+    assert f"line 3: {line_of_text}" in out
     assert err == ""
 
 @pytest.mark.unit_test
@@ -110,7 +137,7 @@ def test_print_summary(capsys):
     searcher.search_folder(".", print_matches=False)
     searcher.print_summary()
     out, err = capsys.readouterr()
-    assert out == f"  Searched: 1 folders, 2 files, 5 lines, 821 bytes\n"
+    assert "Searched: 1 folders, 2 files, 5 lines, 821 bytes" in out
     assert err == ""
 
 @pytest.mark.unit_test
@@ -252,10 +279,11 @@ def test_cli_projects() -> None:
 def test_cli_packages() -> None:
     """Test the *packages option.
     """
+    example = "click.style('Some things'"
     runner = CliRunner()
-    result = runner.invoke(cli, ["click.style('Some things'", "*packages"])
+    result = runner.invoke(cli, [example, "*packages"])
     assert result.exit_code == 0
-    assert "site-packages\\click" in result.output
+    assert example in result.output
     assert "termui.py" in result.output
 
 

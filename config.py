@@ -8,6 +8,7 @@ COLOR_MATCH_LINE = "cyan"
 COLOR_MATCH_TEXT = "green"
 COLOR_SUMMARY = "green"
 COLOR_WARNING = "red"
+COLOR_SEARCHED_FOLDERS = "yellow"
 
 # subfolders to never be searched:
 SKIPPED_FOLDERS = [
