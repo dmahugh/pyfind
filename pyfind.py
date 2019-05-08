@@ -71,7 +71,7 @@ def cli(searchfor: str, startdir: str, filetypes: str, subfolders: bool) -> None
     if startdir.lower().startswith("*package"):
         # search installed packages source code
         search_root = Path(site.getsitepackages()[-1])
-        subfolders = True # force subfolder search for *packages option
+        subfolders = True  # force subfolder search for *packages option
     elif startdir.lower().startswith("*stdlib"):
         # search Python standard library source code
         search_root = Path(sys.exec_prefix).joinpath("Lib")
@@ -116,7 +116,7 @@ class Match:
         # to color-highlight the matched text, break the line into sections
         sections: List[Tuple] = highlight_match(self.match, self.search_for, chars)
 
-        click.echo("\r", nl=False) # reset console to start of line
+        click.echo("\r", nl=False)  # reset console to start of line
 
         # print the prefix, with nl=False to print the sections on the same line
         click.echo(click.style(prefix, fg=config.COLOR_MATCH_LINE), nl=False)
@@ -166,13 +166,13 @@ class Search:
         instance.
         """
         if self.last_folder_printed != match.file.parent:
-            click.echo("\r", nl=False) # reset console to start of line
+            click.echo("\r", nl=False)  # reset console to start of line
             prefix = "folder: ".rjust(config.PREFIX_LENGTH)
-            folder_name = pad_string(str(match.file.parent), self.console_width - config.PREFIX_LENGTH)
-
-            click.echo(
-                click.style(f"{prefix}{folder_name}", fg=config.COLOR_FOLDER)
+            folder_name = pad_string(
+                str(match.file.parent), self.console_width - config.PREFIX_LENGTH
             )
+
+            click.echo(click.style(f"{prefix}{folder_name}", fg=config.COLOR_FOLDER))
             self.last_folder_printed = match.file.parent
             self.last_file_printed = ""
 
@@ -188,7 +188,7 @@ class Search:
     def print_summary(self):
         """Prints the search totals to the console.
         """
-        click.echo("\r", nl=False) # reset console to start of line
+        click.echo("\r", nl=False)  # reset console to start of line
         prefix = "Searched: ".rjust(config.PREFIX_LENGTH)
         summary_text = (
             f"{prefix}{self.searched_folders} folders, "
@@ -196,7 +196,11 @@ class Search:
             f"{self.searched_lines} lines, "
             f"{self.searched_bytes} bytes"
         )
-        click.echo(click.style(pad_string(summary_text, self.console_width), fg=config.COLOR_SUMMARY))
+        click.echo(
+            click.style(
+                pad_string(summary_text, self.console_width), fg=config.COLOR_SUMMARY
+            )
+        )
 
     def reset_totals(self) -> None:
         """Resets search totals to start a new set of searches.
@@ -228,14 +232,19 @@ class Search:
             ):
                 continue
 
-            folder_full_line = pad_string(f"\r{str(current_folder)}\r", self.console_width)
-            click.echo(click.style(folder_full_line, fg=config.COLOR_SEARCHED_FOLDERS), nl=False)
+            folder_full_line = pad_string(
+                f"\r{str(current_folder)}\r", self.console_width
+            )
+            click.echo(
+                click.style(folder_full_line, fg=config.COLOR_SEARCHED_FOLDERS),
+                nl=False,
+            )
 
             if not subdirs:
                 del dirs[:]  # Don't search subfolders.
             self.searched_folders += 1
             for file in files:
-                #file_to_search: Path = Path(file)
+                # file_to_search: Path = Path(file)
                 file_to_search: Path = Path(curdir).joinpath(file)
                 if file_to_search.suffix.lower() in self.file_types:
                     self.searched_files += 1
@@ -413,5 +422,3 @@ def textfile_to_list(filename: str) -> List[str]:
             if line.strip():
                 returned_list.append(line.strip())
     return returned_list
-
-
