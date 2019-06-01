@@ -356,7 +356,7 @@ def pad_string(string: str, length: int) -> str:
     needed many places in pyfind because of the re-use of a single console
     line for running status information about which folders are being searched.
     """
-    return string.ljust(length)[:length]
+    return string[:length].ljust(length)
 
 
 def search_file(file: str, search_for: str) -> Tuple[List[Match], int, int]:
