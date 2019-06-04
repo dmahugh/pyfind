@@ -42,7 +42,7 @@ def cli(searchfor: str, startdir: str, filetypes: str, subfolders: bool) -> None
     """\b
     _______________         searchfor: text to search for (required)
      |___|___|___|          startdir:  folder to search, or one of the options below
-       |___|___|            *projects = project folders (defined in projects.txt)
+       |___|___|            *projects = project folders as defined in projects.txt (default)
          |___|              *stdlib   = Python standard library
            |                *packages = installed packages in current environment
     """
