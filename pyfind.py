@@ -71,10 +71,11 @@ def cli(searchfor: str, startdir: str, filetypes: str, subfolders: bool) -> None
     if startdir.lower().startswith("*package"):
         # search installed packages source code
         search_root = Path(site.getsitepackages()[-1])
-        subfolders = True  # force subfolder search for *packages option
+        subfolders = True
     elif startdir.lower().startswith("*stdlib"):
         # search Python standard library source code
         search_root = Path(sys.exec_prefix).joinpath("Lib")
+        subfolders = True
     else:
         # An explicit search folder was specified on the command line.
         search_root = Path(startdir)
