@@ -1,5 +1,5 @@
 # pyfind
-Pyfind is a Click-based command line tool for searching Python source code across multiple projects or packages. I use it when I'm writing code to accomplish some task and want to quickly see examples of how I've accomplished that same task before.
+Pyfind is a command line tool for searching Python source code across multiple projects or packages. I use it when I'm writing code to accomplish some task and want to quickly see examples of how I've accomplished that same task before.
 
 The default behavior is to search all local project folders defined in a ```projects.txt``` file in the pyfind home folder. For example, here's a truncated screenshot of a search for use of the ```json.dumps``` method across my projects, which I might do to remind myself of its syntax:
 
